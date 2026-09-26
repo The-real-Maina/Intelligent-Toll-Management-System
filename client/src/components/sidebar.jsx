@@ -3,6 +3,7 @@ import {
   FaCar,
   FaRoad,
   FaMoneyBillWave,
+  FaMobileAlt,
   FaUsers,
   FaChartBar,
   FaCog,
@@ -88,6 +89,15 @@ function Sidebar() {
             <Link className="nav-link text-white" to="/toll-gates">
               <FaRoad className="me-2" />
               Toll Gates
+            </Link>
+          </li>
+        )}
+
+        {!isAdmin && (
+          <li className="nav-item">
+            <Link className="nav-link text-white" to="/pay">
+              <FaMobileAlt className="me-2" />
+              Pay Toll
             </Link>
           </li>
         )}

@@ -9,6 +9,7 @@ import Users from "./pages/Users";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import PayNow from "./pages/PayNow";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -62,6 +63,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Payments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pay"
+          element={
+            <ProtectedRoute>
+              <PayNow />
             </ProtectedRoute>
           }
         />

@@ -9,6 +9,7 @@ const userRoutes = require("./routes/users");
 const authRoutes = require("./routes/auth");
 const vehicleRoutes = require("./routes/vehicle");
 const tollGateRoutes = require("./routes/tollGate");
+const tollBoothRoutes = require("./routes/tollBoothRoutes");   // ← added
 const paymentRoutes = require("./routes/payments");
 const settingsRoutes = require("./routes/settings");
 const mpesaRoutes = require("./routes/mpesaRoutes");   // ← added
@@ -24,6 +25,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/tollgates", tollGateRoutes);
+app.use("/api/tollbooths", tollBoothRoutes);   // ← added
 app.use("/api/payments", paymentRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/mpesa", mpesaRoutes);   // ← added

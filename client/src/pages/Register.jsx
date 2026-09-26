@@ -13,7 +13,7 @@ function Register() {
     email: "",
     phone: "",
     password: "",
-    role: "Driver",
+    role: "driver",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -35,7 +35,7 @@ function Register() {
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || err.response?.data?.error || "Registration failed. Please try again.");
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -58,3 +58,16 @@ export const updateTollGate = (id, gate) =>
 
 export const deleteTollGate = (id) =>
   API.delete(`/tollgates/${id}`);
+
+// ================= TOLL BOOTHS =================
+
+export const getTollBooths = () =>
+  API.get("/tollbooths");
+
+// ================= M-PESA =================
+
+export const initiateMpesaPayment = ({ vehicle_id, booth_id, amount, phoneNumber }) =>
+  API.post("/mpesa/stkpush", { vehicle_id, booth_id, amount, phoneNumber });
+
+export const checkMpesaStatus = (checkoutRequestId) =>
+  API.get(`/mpesa/status/${checkoutRequestId}`);
