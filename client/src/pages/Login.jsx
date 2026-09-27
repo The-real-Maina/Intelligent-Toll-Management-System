@@ -9,27 +9,41 @@ const API = axios.create({ baseURL: "http://localhost:5000/api" });
 function Login() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
     try {
       const res = await API.post("/auth/login", formData);
+
       localStorage.setItem("itms_token", res.data.token);
       localStorage.setItem("itms_user", JSON.stringify(res.data.user));
+
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+
+      setError(
+        err.response?.data?.message ||
+          "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -39,7 +53,10 @@ function Login() {
     <div
       className="d-flex justify-content-center align-items-center vh-100"
       style={{
-        backgroundImage: `linear-gradient(rgba(15, 81, 50, 0.75), rgba(25, 135, 84, 0.75)), url(${tollBg})`,
+        backgroundImage: `linear-gradient(
+          rgba(15, 81, 50, 0.75),
+          rgba(25, 135, 84, 0.75)
+        ), url(${tollBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -52,7 +69,6 @@ function Login() {
         }}
       >
         <div className="card-body p-5">
-
           <h2 className="text-center text-success mb-4">
             Intelligent Toll Management System
           </h2>
@@ -68,7 +84,6 @@ function Login() {
           )}
 
           <form onSubmit={handleLogin}>
-
             <div className="mb-3">
               <label className="form-label">Email</label>
 
@@ -116,9 +131,22 @@ function Login() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
-
           </form>
 
+          {/* Registration option */}
+          <div className="text-center mt-4">
+            <span className="text-muted">
+              Don't have an account?{" "}
+            </span>
+
+            <button
+              type="button"
+              className="btn btn-link text-success fw-bold p-0 text-decoration-none"
+              onClick={() => navigate("/register")}
+            >
+              Register here
+            </button>
+          </div>
         </div>
       </div>
     </div>
