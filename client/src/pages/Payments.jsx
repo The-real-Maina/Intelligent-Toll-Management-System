@@ -4,200 +4,491 @@ import "../App.css";
 import API from "../services/api";
 
 function Payments() {
-  const user = JSON.parse(localStorage.getItem("itms_user") || "null");
-  const isDriver = user?.role === "Driver";
-
   const [payments, setPayments] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [tollGates, setTollGates] = useState([]);
-
-  const [formData, setFormData] = useState({
-    vehicle_id: "", gate_id: "", reference_number: "", amount: "", payment_method: "Mpesa",
-  });
-  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadPayments();
-    loadVehicles();
-    loadTollGates();
   }, []);
 
   const loadPayments = async () => {
-    try { const res = await API.get("/payments"); setPayments(res.data); }
-    catch (error) { console.error(error); }
-  };
-
-  const loadVehicles = async () => {
-    try { const res = await API.get("/vehicles"); setVehicles(res.data); }
-    catch (error) { console.error(error); }
-  };
-
-  const loadTollGates = async () => {
-    try { const res = await API.get("/tollgates"); setTollGates(res.data); }
-    catch (error) { console.error(error); }
-  };
-
-  const resetForm = () => {
-    setFormData({ vehicle_id: "", gate_id: "", reference_number: "", amount: "", payment_method: "Mpesa" });
-    setEditingId(null);
-  };
-
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     try {
-      if (editingId) {
-        await API.put(`/payments/${editingId}`, { reference_number: formData.reference_number, amount: formData.amount, payment_method: formData.payment_method });
-        alert("Payment updated successfully");
-      } else {
-        if (!formData.vehicle_id || !formData.gate_id) { alert("Please select a vehicle and a toll gate"); return; }
-        await API.post("/payments", formData);
-        alert("Payment recorded successfully");
-      }
-      resetForm();
-      loadPayments();
-    } catch (error) { alert(error.response?.data?.message || "Error saving payment"); }
+      setLoading(true);
+      setError("");
+
+      const res = await API.get("/payments");
+
+      setPayments(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Error loading payments:", error);
+
+      setError("Unable to load payment records.");
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (payment) => {
-    setEditingId(payment.payment_id);
-    setFormData({ vehicle_id: "", gate_id: "", reference_number: payment.reference_number || "", amount: payment.amount || "", payment_method: payment.payment_method || "Mpesa" });
-  };
+  // Total amount paid
+  const totalAmount = payments.reduce(
+    (sum, payment) => sum + Number(payment.amount || 0),
+    0
+  );
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this payment?")) return;
-    try { await API.delete(`/payments/${id}`); loadPayments(); }
-    catch (error) { alert("Delete failed"); }
-  };
+  // Total M-Pesa payments
+  const mpesaPayments = payments.filter((payment) => {
+    const method = payment.payment_method?.toLowerCase();
 
-  const totalAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+    return method === "mpesa" || method === "m-pesa";
+  }).length;
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+
+    return new Date(date).toLocaleString("en-KE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div className="dashboard">
       <Sidebar />
+
       <div className="content">
+
+        {/* Page Title */}
         <h2>Payments Management</h2>
 
-        {/* Summary Cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
-          <div style={{ background: "white", borderRadius: "10px", padding: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderLeft: "5px solid #198754" }}>
-            <p style={{ fontSize: "13px", color: "#888", margin: 0 }}>Total Payments</p>
-            <h3 style={{ fontSize: "32px", fontWeight: "700", color: "#198754", margin: "8px 0 0" }}>{payments.length}</h3>
+        <p
+          style={{
+            textAlign: "center",
+            color: "#666",
+            marginTop: "-5px",
+            marginBottom: "25px",
+          }}
+        >
+          View your completed toll payment history
+        </p>
+
+        {/* ================= SUMMARY CARDS ================= */}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "20px",
+            marginBottom: "30px",
+          }}
+        >
+
+          {/* Total Payments */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              borderLeft: "5px solid #198754",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#888",
+                margin: 0,
+              }}
+            >
+              Total Payments
+            </p>
+
+            <h3
+              style={{
+                fontSize: "32px",
+                fontWeight: "700",
+                color: "#198754",
+                margin: "8px 0 0",
+              }}
+            >
+              {payments.length}
+            </h3>
           </div>
-          <div style={{ background: "white", borderRadius: "10px", padding: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderLeft: "5px solid #0d6efd" }}>
-            <p style={{ fontSize: "13px", color: "#888", margin: 0 }}>Total Amount (KES)</p>
-            <h3 style={{ fontSize: "32px", fontWeight: "700", color: "#0d6efd", margin: "8px 0 0" }}>{totalAmount.toLocaleString("en-KE", { minimumFractionDigits: 2 })}</h3>
+
+          {/* Total Amount */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              borderLeft: "5px solid #0d6efd",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#888",
+                margin: 0,
+              }}
+            >
+              Total Amount (KES)
+            </p>
+
+            <h3
+              style={{
+                fontSize: "32px",
+                fontWeight: "700",
+                color: "#0d6efd",
+                margin: "8px 0 0",
+              }}
+            >
+              {totalAmount.toLocaleString("en-KE", {
+                minimumFractionDigits: 2,
+              })}
+            </h3>
           </div>
-          <div style={{ background: "white", borderRadius: "10px", padding: "20px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", borderLeft: "5px solid #6f42c1" }}>
-            <p style={{ fontSize: "13px", color: "#888", margin: 0 }}>Mpesa Payments</p>
-            <h3 style={{ fontSize: "32px", fontWeight: "700", color: "#6f42c1", margin: "8px 0 0" }}>{payments.filter(p => p.payment_method === "Mpesa").length}</h3>
+
+          {/* M-Pesa */}
+          <div
+            style={{
+              background: "white",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+              borderLeft: "5px solid #6f42c1",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#888",
+                margin: 0,
+              }}
+            >
+              M-Pesa Payments
+            </p>
+
+            <h3
+              style={{
+                fontSize: "32px",
+                fontWeight: "700",
+                color: "#6f42c1",
+                margin: "8px 0 0",
+              }}
+            >
+              {mpesaPayments}
+            </h3>
           </div>
+
         </div>
 
-        {/* Driver Only - Record Payment Form */}
-        {isDriver && (
-          <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", marginBottom: "30px", borderLeft: "5px solid #198754" }}>
-            <h5 style={{ marginBottom: "20px", color: "#198754", fontWeight: "700" }}>{editingId ? "✏️ Update Payment" : "➕ Record New Payment"}</h5>
-            {editingId && <p style={{ fontSize: "13px", color: "#888", marginTop: "-10px", marginBottom: "16px" }}>Only payment details can be updated here.</p>}
-            <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", alignItems: "end" }}>
-              {!editingId && (
-                <>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: "600", color: "#555" }}>Vehicle</label>
-                    <select name="vehicle_id" value={formData.vehicle_id} onChange={handleChange} required style={{ padding: "10px 14px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", outline: "none", width: "100%", background: "white", color: "#333" }}>
-                      <option value="">Select vehicle</option>
-                      {vehicles.map((v) => <option key={v.vehicle_id} value={v.vehicle_id}>{v.plate_number} — {v.owner_name}</option>)}
-                    </select>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <label style={{ fontSize: "13px", fontWeight: "600", color: "#555" }}>Toll Gate</label>
-                    <select name="gate_id" value={formData.gate_id} onChange={handleChange} required style={{ padding: "10px 14px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", outline: "none", width: "100%", background: "white", color: "#333" }}>
-                      <option value="">Select toll gate</option>
-                      {tollGates.map((g) => <option key={g.gate_id} value={g.gate_id}>{g.gate_name}</option>)}
-                    </select>
-                  </div>
-                </>
-              )}
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "#555" }}>Reference Number</label>
-                <input type="text" name="reference_number" placeholder="e.g. REF-001" value={formData.reference_number} onChange={handleChange} style={{ padding: "10px 14px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", outline: "none", width: "100%" }} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "#555" }}>Amount (KES)</label>
-                <input type="number" name="amount" placeholder="e.g. 500" value={formData.amount} onChange={handleChange} required step="0.01" style={{ padding: "10px 14px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", outline: "none", width: "100%" }} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "#555" }}>Payment Method</label>
-                <div style={{ padding: "10px 14px", border: "1px solid #ccc", borderRadius: "6px", fontSize: "14px", width: "100%", background: "#f3e8ff", color: "#6b21a8", fontWeight: "600" }}>
-                  📱 M-Pesa
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <label style={{ fontSize: "13px", fontWeight: "600", color: "transparent" }}>Action</label>
-                <button type="submit" style={{ padding: "10px 20px", backgroundColor: editingId ? "#f0ad4e" : "#198754", color: "white", border: "none", borderRadius: "6px", fontSize: "14px", fontWeight: "600", cursor: "pointer", width: "100%" }}>{editingId ? "Update Payment" : "Record Payment"}</button>
-              </div>
-              {editingId && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  <label style={{ fontSize: "13px", fontWeight: "600", color: "transparent" }}>Cancel</label>
-                  <button type="button" onClick={resetForm} style={{ padding: "10px 20px", backgroundColor: "#6c757d", color: "white", border: "none", borderRadius: "6px", fontSize: "14px", fontWeight: "600", cursor: "pointer", width: "100%" }}>Cancel</button>
-                </div>
-              )}
-            </form>
-          </div>
-        )}
+        {/* ================= PAYMENT RECORDS ================= */}
 
-        {/* Admin View Notice */}
-        {!isDriver && (
-          <div style={{ background: "#dbeafe", borderRadius: "8px", padding: "12px 20px", marginBottom: "24px", color: "#1e40af", fontSize: "14px", fontWeight: "600" }}>
-            ℹ️ You are viewing payments in read-only mode. Drivers record their own payments.
-          </div>
-        )}
+        <div
+          style={{
+            background: "white",
+            borderRadius: "10px",
+            padding: "24px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+        >
 
-        {/* Table */}
-        <div style={{ background: "white", borderRadius: "10px", padding: "24px", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
-          <h5 style={{ marginBottom: "20px", color: "#333", fontWeight: "700" }}>💳 Payment Records ({payments.length})</h5>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "20px",
+            }}
+          >
+            <h5
+              style={{
+                margin: 0,
+                color: "#333",
+                fontWeight: "700",
+                fontSize: "18px",
+              }}
+            >
+              💳 Payment History ({payments.length})
+            </h5>
+
+            <button
+              onClick={loadPayments}
+              disabled={loading}
+              style={{
+                padding: "7px 15px",
+                backgroundColor: "#198754",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontWeight: "600",
+              }}
+            >
+              {loading ? "Loading..." : "↻ Refresh"}
+            </button>
+          </div>
+
+          {error && (
+            <div
+              style={{
+                background: "#fdeaea",
+                color: "#a12c2c",
+                padding: "12px",
+                borderRadius: "6px",
+                marginBottom: "15px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+              }}
+            >
+
               <thead>
-                <tr style={{ backgroundColor: "#198754", color: "white" }}>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>#</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Reference</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Vehicle</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Owner</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Amount (KES)</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Method</th>
-                  <th style={{ padding: "12px 16px", textAlign: "left" }}>Date</th>
-                  {isDriver && <th style={{ padding: "12px 16px", textAlign: "left" }}>Actions</th>}
+                <tr
+                  style={{
+                    backgroundColor: "#198754",
+                    color: "white",
+                  }}
+                >
+                  <th style={tableHeader}>#</th>
+
+                  <th style={tableHeader}>
+                    Reference
+                  </th>
+
+                  <th style={tableHeader}>
+                    Vehicle
+                  </th>
+
+                  <th style={tableHeader}>
+                    Owner
+                  </th>
+
+                  <th style={tableHeader}>
+                    Toll Gate
+                  </th>
+
+                  <th style={tableHeader}>
+                    Amount (KES)
+                  </th>
+
+                  <th style={tableHeader}>
+                    Method
+                  </th>
+
+                  <th style={tableHeader}>
+                    Status
+                  </th>
+
+                  <th style={tableHeader}>
+                    Date
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
-                {payments.length > 0 ? payments.map((payment, index) => (
-                  <tr key={payment.payment_id} style={{ backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9", borderBottom: "1px solid #eee" }}>
-                    <td style={{ padding: "12px 16px" }}>{index + 1}</td>
-                    <td style={{ padding: "12px 16px", fontWeight: "600", color: "#198754" }}>{payment.reference_number || "N/A"}</td>
-                    <td style={{ padding: "12px 16px" }}>{payment.plate_number || "N/A"}</td>
-                    <td style={{ padding: "12px 16px" }}>{payment.owner_name || "N/A"}</td>
-                    <td style={{ padding: "12px 16px", fontWeight: "600" }}>KES {parseFloat(payment.amount).toLocaleString("en-KE", { minimumFractionDigits: 2 })}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <span style={{ padding: "4px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600", backgroundColor: "#f3e8ff", color: "#6b21a8" }}>{payment.payment_method}</span>
+
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan="9"
+                      style={{
+                        padding: "35px",
+                        textAlign: "center",
+                        color: "#888",
+                      }}
+                    >
+                      Loading payment records...
                     </td>
-                    <td style={{ padding: "12px 16px", fontSize: "13px", color: "#888" }}>{new Date(payment.payment_date).toLocaleDateString()}</td>
-                    {isDriver && (
-                      <td style={{ padding: "12px 16px" }}>
-                        <button onClick={() => handleEdit(payment)} style={{ padding: "6px 14px", backgroundColor: "#0d6efd", color: "white", border: "none", borderRadius: "5px", fontSize: "13px", fontWeight: "600", cursor: "pointer", marginRight: "8px" }}>Edit</button>
-                        <button onClick={() => handleDelete(payment.payment_id)} style={{ padding: "6px 14px", backgroundColor: "#dc3545", color: "white", border: "none", borderRadius: "5px", fontSize: "13px", fontWeight: "600", cursor: "pointer" }}>Delete</button>
-                      </td>
-                    )}
                   </tr>
-                )) : <tr><td colSpan={isDriver ? "8" : "7"} style={{ padding: "30px", textAlign: "center", color: "#888" }}>No payments found.</td></tr>}
+                ) : payments.length > 0 ? (
+                  payments.map((payment, index) => (
+
+                    <tr
+                      key={payment.payment_id || index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? "#fff"
+                            : "#f9f9f9",
+
+                        borderBottom:
+                          "1px solid #eee",
+                      }}
+                    >
+
+                      <td style={tableCell}>
+                        {index + 1}
+                      </td>
+
+                      {/* Reference */}
+                      <td
+                        style={{
+                          ...tableCell,
+                          fontWeight: "600",
+                          color: "#198754",
+                        }}
+                      >
+                        {payment.reference_number ||
+                          payment.mpesa_receipt_number ||
+                          payment.transaction_id ||
+                          "N/A"}
+                      </td>
+
+                      {/* Vehicle */}
+                      <td style={tableCell}>
+                        {payment.plate_number || "N/A"}
+                      </td>
+
+                      {/* Owner */}
+                      <td style={tableCell}>
+                        {payment.owner_name || "N/A"}
+                      </td>
+
+                      {/* Toll Gate */}
+                      <td style={tableCell}>
+                        {payment.gate_name ||
+                          payment.booth_name ||
+                          "N/A"}
+                      </td>
+
+                      {/* Amount */}
+                      <td
+                        style={{
+                          ...tableCell,
+                          fontWeight: "600",
+                        }}
+                      >
+                        KES{" "}
+                        {Number(
+                          payment.amount || 0
+                        ).toLocaleString("en-KE", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </td>
+
+                      {/* Method */}
+                      <td style={tableCell}>
+                        <span
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "20px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            backgroundColor: "#f3e8ff",
+                            color: "#6b21a8",
+                          }}
+                        >
+                          {payment.payment_method ||
+                            "M-Pesa"}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td style={tableCell}>
+                        <span
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: "20px",
+                            fontSize: "12px",
+                            fontWeight: "600",
+                            backgroundColor: "#e8f8ee",
+                            color: "#198754",
+                          }}
+                        >
+                          {payment.status || "Paid"}
+                        </span>
+                      </td>
+
+                      {/* Date */}
+                      <td
+                        style={{
+                          ...tableCell,
+                          fontSize: "13px",
+                          color: "#777",
+                        }}
+                      >
+                        {formatDate(
+                          payment.payment_date ||
+                            payment.created_at
+                        )}
+                      </td>
+
+                    </tr>
+                  ))
+                ) : (
+
+                  <tr>
+                    <td
+                      colSpan="9"
+                      style={{
+                        padding: "40px",
+                        textAlign: "center",
+                        color: "#888",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "30px",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        💳
+                      </div>
+
+                      No payment records found.
+
+                      <div
+                        style={{
+                          fontSize: "13px",
+                          marginTop: "5px",
+                        }}
+                      >
+                        Payments made through Pay Toll
+                        will appear here.
+                      </div>
+                    </td>
+                  </tr>
+
+                )}
+
               </tbody>
+
             </table>
           </div>
+
         </div>
+
       </div>
     </div>
   );
 }
+
+const tableHeader = {
+  padding: "12px 14px",
+  textAlign: "left",
+  whiteSpace: "nowrap",
+};
+
+const tableCell = {
+  padding: "12px 14px",
+  whiteSpace: "nowrap",
+};
 
 export default Payments;
