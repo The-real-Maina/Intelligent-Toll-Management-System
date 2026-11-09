@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const getUsers = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT user_id, full_name, email, phone, role, created_at FROM users"
+      "SELECT user_id, full_name, email, phone, role, created_at FROM users ORDER BY created_at DESC"
     );
     res.json(rows);
   } catch (err) {
@@ -32,14 +32,16 @@ const getUserById = async (req, res) => {
   }
 };
 
-// Create user
+// Create user (Admin action - Auto-verified)
 const createUser = async (req, res) => {
   try {
     const { full_name, email, phone, password, role } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // FIX: Added is_verified = 1 so they can log in immediately!
     const [result] = await db.query(
-      `INSERT INTO users (full_name, email, phone, password, role)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO users (full_name, email, phone, password, role, is_verified)
+       VALUES (?, ?, ?, ?, ?, 1)`,
       [full_name, email, phone, hashedPassword, role]
     );
     res.status(201).json({
@@ -96,7 +98,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// Change password (requires current password)
+// Change password
 const changePassword = async (req, res) => {
   try {
     const { id } = req.params;

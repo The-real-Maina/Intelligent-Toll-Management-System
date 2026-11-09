@@ -1,12 +1,12 @@
 const db = require("../config/db");
 
-// Get all payments (joined with transaction + vehicle info).
-// Admins see every payment. Drivers only see payments for their own vehicles.
+// Get all payments
 const getPayments = async (req, res) => {
   try {
     let rows;
 
-    if (req.user.role === "Driver") {
+    // FIX: Added ?. to prevent crashing if req.user is missing
+    if (req.user?.role === "Driver") {
       [rows] = await db.query(
         `SELECT p.*, v.plate_number, v.owner_name
          FROM payments p
@@ -33,7 +33,7 @@ const getPayments = async (req, res) => {
   }
 };
 
-// Get one payment. Drivers can only fetch a payment tied to their own vehicle.
+// Get one payment
 const getPaymentById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -52,7 +52,7 @@ const getPaymentById = async (req, res) => {
 
     const payment = rows[0];
 
-    if (req.user.role === "Driver" && payment.vehicle_owner_id !== req.user.user_id) {
+    if (req.user?.role === "Driver" && payment.vehicle_owner_id !== req.user.user_id) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -64,11 +64,9 @@ const getPaymentById = async (req, res) => {
   }
 };
 
-// Create payment: creates the transaction (vehicle passing a gate) AND the
-// payment that settles it, as one atomic DB transaction.
-// Drivers may only create a payment for a vehicle they own.
+// Create payment
 const createPayment = async (req, res) => {
-  const { vehicle_id, gate_id, reference_number, amount, payment_method } = req.body;
+  let { vehicle_id, gate_id, reference_number, amount, payment_method } = req.body;
 
   if (!vehicle_id || !gate_id || !amount) {
     return res.status(400).json({
@@ -76,7 +74,7 @@ const createPayment = async (req, res) => {
     });
   }
 
-  if (req.user.role === "Driver") {
+  if (req.user?.role === "Driver") {
     const [vehicleRows] = await db.query(
       "SELECT user_id FROM vehicles WHERE vehicle_id = ?",
       [vehicle_id]
@@ -89,11 +87,16 @@ const createPayment = async (req, res) => {
     }
   }
 
+  // Sanitize the prefix
+  if (!reference_number || reference_number.trim() === "") {
+    const methodPrefix = payment_method ? payment_method.toLowerCase().replace(/[^a-z0-9]/g, '') : "txn";
+    reference_number = `${methodPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+  }
+
   const conn = await db.getConnection();
   try {
     await conn.beginTransaction();
 
-    // 1. Create the transaction (vehicle passing this toll gate)
     const [txResult] = await conn.query(
       `INSERT INTO transactions (vehicle_id, gate_id, amount, status)
        VALUES (?, ?, ?, 'Completed')`,
@@ -101,11 +104,10 @@ const createPayment = async (req, res) => {
     );
     const transaction_id = txResult.insertId;
 
-    // 2. Create the payment that settles it
     const [payResult] = await conn.query(
       `INSERT INTO payments (transaction_id, reference_number, amount, payment_method)
        VALUES (?, ?, ?, ?)`,
-      [transaction_id, reference_number || null, amount, payment_method]
+      [transaction_id, reference_number, amount, payment_method]
     );
 
     await conn.commit();
@@ -114,6 +116,7 @@ const createPayment = async (req, res) => {
       message: "Payment recorded successfully",
       payment_id: payResult.insertId,
       transaction_id,
+      reference_number: reference_number 
     });
   } catch (err) {
     await conn.rollback();
@@ -127,13 +130,13 @@ const createPayment = async (req, res) => {
   }
 };
 
-// Update payment. Drivers can only update a payment tied to their own vehicle.
+// Update payment
 const updatePayment = async (req, res) => {
   try {
     const { id } = req.params;
     const { reference_number, amount, payment_method } = req.body;
 
-    if (req.user.role === "Driver") {
+    if (req.user?.role === "Driver") {
       const [rows] = await db.query(
         `SELECT v.user_id AS vehicle_owner_id
          FROM payments p
@@ -167,12 +170,12 @@ const updatePayment = async (req, res) => {
   }
 };
 
-// Delete payment. Drivers can only delete a payment tied to their own vehicle.
+// Delete payment
 const deletePayment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (req.user.role === "Driver") {
+    if (req.user?.role === "Driver") {
       const [rows] = await db.query(
         `SELECT v.user_id AS vehicle_owner_id
          FROM payments p
@@ -205,10 +208,40 @@ const deletePayment = async (req, res) => {
   }
 };
 
+// Verify payment (For Toll Attendant)
+const verifyPayment = async (req, res) => {
+  try {
+    const { reference } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT p.*, v.plate_number, v.vehicle_type, u.full_name as owner_name
+       FROM payments p
+       LEFT JOIN transactions t ON p.transaction_id = t.transaction_id
+       LEFT JOIN vehicles v ON t.vehicle_id = v.vehicle_id
+       LEFT JOIN users u ON v.user_id = u.user_id
+       WHERE p.reference_number = ?`,
+      [reference]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "INVALID: Payment not found." });
+    }
+
+    res.json({ 
+      message: "VALID: Payment successful.", 
+      payment: rows[0] 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error during verification." });
+  }
+};
+
 module.exports = {
   getPayments,
   getPaymentById,
   createPayment,
   updatePayment,
   deletePayment,
+  verifyPayment
 };

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { FaUser, FaEnvelope, FaPhone, FaLock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaArrowLeft } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import tollBg from "../assets/toll-bg.jpg";
 
 const API = axios.create({ baseURL: "http://localhost:5000/api" });
 
@@ -30,9 +31,19 @@ function Register() {
     setLoading(true);
 
     try {
-      await API.post("/auth/register", formData);
-      setSuccess("Account created successfully! Redirecting to login...");
-      setTimeout(() => navigate("/"), 1500);
+      const res = await API.post("/auth/register", formData);
+      setSuccess("Account created successfully! Redirecting to OTP verification...");
+      
+      // Redirect to the OTP verification page
+      setTimeout(() => {
+        navigate("/verify-otp", { 
+          state: { 
+            email: formData.email, 
+            simulatedOtp: res.data.simulated_otp // Pass the simulated OTP to the next page
+          } 
+        });
+      }, 1500);
+      
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || "Registration failed. Please try again.");
@@ -45,17 +56,25 @@ function Register() {
     <div
       className="d-flex justify-content-center align-items-center vh-100"
       style={{
-        background: "linear-gradient(to right, #0f5132, #198754)",
+        backgroundImage: `linear-gradient(
+          rgba(15, 81, 50, 0.75),
+          rgba(25, 135, 84, 0.75)
+        ), url(${tollBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
-      <div
-        className="card shadow-lg"
-        style={{
-          width: "460px",
-          borderRadius: "15px",
-        }}
-      >
+      <div className="card shadow-lg" style={{ width: "460px", borderRadius: "15px" }}>
         <div className="card-body p-5">
+
+          <button 
+            type="button"
+            onClick={() => navigate("/")} 
+            className="btn btn-sm btn-outline-secondary mb-3 border-0 p-0 text-muted"
+            style={{ fontSize: "14px", display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            <FaArrowLeft /> Back to Home
+          </button>
 
           <h2 className="text-center text-success mb-4">
             Create an Account
@@ -74,7 +93,6 @@ function Register() {
           )}
 
           <form onSubmit={handleRegister}>
-
             <div className="mb-3">
               <label className="form-label">Full Name</label>
               <div className="input-group">
@@ -139,18 +157,13 @@ function Register() {
               </div>
             </div>
 
-            <button
-              className="btn btn-success w-100"
-              type="submit"
-              disabled={loading}
-            >
+            <button className="btn btn-success w-100" type="submit" disabled={loading}>
               {loading ? "Creating account..." : "Register"}
             </button>
-
           </form>
 
           <p className="text-center mt-3 mb-0">
-            Already have an account? <Link to="/">Login</Link>
+            Already have an account? <Link to="/login" className="text-success fw-bold text-decoration-none">Login</Link>
           </p>
 
         </div>

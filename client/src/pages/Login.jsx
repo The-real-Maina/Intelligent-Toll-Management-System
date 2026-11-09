@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { FaUser, FaLock } from "react-icons/fa";
+import { FaUser, FaLock, FaArrowLeft } from "react-icons/fa"; // Added FaArrowLeft
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import tollBg from "../assets/toll-bg.jpg";
 
 const API = axios.create({ baseURL: "http://localhost:5000/api" });
+
+// Where each role lands after a successful login
+const homeForRole = (role) =>
+  role === "Toll Attendant" ? "/verify-gate" : "/dashboard";
 
 function Login() {
   const navigate = useNavigate();
@@ -32,13 +36,43 @@ function Login() {
 
     try {
       const res = await API.post("/auth/login", formData);
+      const data = res.data;
 
-      localStorage.setItem("itms_token", res.data.token);
-      localStorage.setItem("itms_user", JSON.stringify(res.data.user));
+      // Toll Attendant: password was correct, OTP is still needed
+      if (data.otp_required) {
+        navigate("/verify-otp", {
+          state: {
+            email: data.email,
+            mode: "login",
+            simulatedOtp: data.simulated_otp,
+          },
+        });
+        return;
+      }
 
-      navigate("/dashboard");
+      // Admin / verified Driver: logged in
+      if (data.token && data.user) {
+        localStorage.setItem("itms_token", data.token);
+        localStorage.setItem("itms_user", JSON.stringify(data.user));
+        navigate(homeForRole(data.user.role));
+        return;
+      }
+
+      setError("Unexpected response from the server. Please try again.");
     } catch (err) {
       console.error(err);
+
+      // Driver who never finished registration: a fresh OTP was sent
+      if (err.response?.data?.needs_verification) {
+        navigate("/verify-otp", {
+          state: {
+            email: err.response.data.email,
+            mode: "register",
+            simulatedOtp: err.response.data.simulated_otp,
+          },
+        });
+        return;
+      }
 
       setError(
         err.response?.data?.message ||
@@ -69,6 +103,17 @@ function Login() {
         }}
       >
         <div className="card-body p-5">
+          
+          {/* BACK TO HOME BUTTON */}
+          <button 
+            type="button"
+            onClick={() => navigate("/")} 
+            className="btn btn-sm btn-outline-secondary mb-3 border-0 p-0 text-muted"
+            style={{ fontSize: "14px", display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            <FaArrowLeft /> Back to Home
+          </button>
+
           <h2 className="text-center text-success mb-4">
             Intelligent Toll Management System
           </h2>

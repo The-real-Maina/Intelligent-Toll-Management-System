@@ -26,51 +26,67 @@ function Dashboard() {
   const [recentVehicles, setRecentVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // FIX: Moved the function INSIDE the useEffect to satisfy ESLint
   useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const isAdminUser = user?.role === "Admin";
+
+        const requests = [
+          API.get("/vehicles"),
+          API.get("/tollgates"),
+          API.get("/payments"),
+        ];
+
+        if (isAdminUser) {
+          requests.push(API.get("/users"));
+        }
+
+        const results = await Promise.all(requests);
+
+        const vehicles = results[0].data;
+        const tollGates = results[1].data;
+        const payments = results[2].data;
+        const users = isAdminUser ? results[3].data : [];
+
+        const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+        const mpesaPayments = payments.filter(p => p.payment_method === "Mpesa").length;
+
+        setStats({
+          vehicles: vehicles.length,
+          tollGates: tollGates.length,
+          payments: payments.length,
+          users: users.length,
+          totalRevenue,
+          mpesaPayments,
+        });
+
+        setRecentPayments(payments.slice(0, 5));
+        setRecentVehicles(vehicles.slice(0, 5));
+        setLoading(false);
+      } catch (error) {
+        console.error("Dashboard load error:", error);
+        setLoading(false);
+      }
+    };
+
     loadDashboardData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadDashboardData = async () => {
-    try {
-      const isAdminUser = user?.role === "Admin";
-
-      const requests = [
-        API.get("/vehicles"),
-        API.get("/tollgates"),
-        API.get("/payments"),
-      ];
-
-      // Only admins are allowed to hit /users — skip it for drivers
-      if (isAdminUser) {
-        requests.push(API.get("/users"));
-      }
-
-      const results = await Promise.all(requests);
-
-      const vehicles = results[0].data;
-      const tollGates = results[1].data;
-      const payments = results[2].data;
-      const users = isAdminUser ? results[3].data : [];
-
-      const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-      const mpesaPayments = payments.filter(p => p.payment_method === "Mpesa").length;
-
-      setStats({
-        vehicles: vehicles.length,
-        tollGates: tollGates.length,
-        payments: payments.length,
-        users: users.length,
-        totalRevenue,
-        mpesaPayments,
-      });
-
-      setRecentPayments(payments.slice(0, 5));
-      setRecentVehicles(vehicles.slice(0, 5));
-      setLoading(false);
-    } catch (error) {
-      console.error("Dashboard load error:", error);
-      setLoading(false);
+  // Helper to render a clean reference or a badge for old records
+  const renderReference = (ref) => {
+    if (!ref || ref === "null") {
+      return (
+        <span style={{
+          padding: "3px 10px", borderRadius: "20px", fontSize: "11px",
+          fontWeight: "600", backgroundColor: "#fef3c7", color: "#92400e"
+        }}>
+          Pending
+        </span>
+      );
     }
+    return ref;
   };
 
   return (
@@ -180,7 +196,9 @@ function Dashboard() {
                         {recentPayments.length > 0 ? (
                           recentPayments.map((payment, index) => (
                             <tr key={index} style={{ borderBottom: "1px solid #eee" }}>
-                              <td style={{ padding: "10px 12px", fontSize: "13px", color: "#198754", fontWeight: "600" }}>{payment.reference_number || "N/A"}</td>
+                              <td style={{ padding: "10px 12px", fontSize: "13px", color: "#198754", fontWeight: "600" }}>
+                                {renderReference(payment.reference_number)}
+                              </td>
                               <td style={{ padding: "10px 12px", fontSize: "13px", fontWeight: "600" }}>KES {parseFloat(payment.amount).toLocaleString()}</td>
                               <td style={{ padding: "10px 12px" }}>
                                 <span style={{
@@ -278,7 +296,9 @@ function Dashboard() {
                         recentPayments.map((payment, index) => (
                           <tr key={index} style={{ borderBottom: "1px solid #eee", backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9" }}>
                             <td style={{ padding: "12px 16px" }}>{index + 1}</td>
-                            <td style={{ padding: "12px 16px", color: "#198754", fontWeight: "600" }}>{payment.reference_number || "N/A"}</td>
+                            <td style={{ padding: "12px 16px", color: "#198754", fontWeight: "600" }}>
+                              {renderReference(payment.reference_number)}
+                            </td>
                             <td style={{ padding: "12px 16px", fontWeight: "600" }}>KES {parseFloat(payment.amount).toLocaleString()}</td>
                             <td style={{ padding: "12px 16px" }}>
                               <span style={{

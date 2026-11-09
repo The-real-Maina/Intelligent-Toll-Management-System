@@ -305,3 +305,316 @@ tbody td button:last-child:hover {
     padding: 8px 10px;
   }
 }
+
+/* =========================================
+   LANDING PAGE THEME (HIGHWAY)
+   ========================================= */
+
+.landing-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f6f9;
+}
+
+/* Navbar - Glassmorphism effect */
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 4rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.landing-nav .logo {
+  font-size: 1.8rem;
+}
+
+.landing-nav .nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.landing-nav .login-btn {
+  text-decoration: none;
+  color: #198754;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.landing-nav .login-btn:hover {
+  color: #157347;
+}
+
+.landing-nav .register-btn {
+  text-decoration: none;
+  background: #198754;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.landing-nav .register-btn:hover {
+  background: #157347;
+  transform: translateY(-2px);
+}
+
+/* Hero Section - Expressway Image */
+.hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10rem 2rem;
+  /* Proper Aerial Highway Image with a Dark Green Overlay */
+  background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(25, 135, 84, 0.8)), 
+              url('https://images.unsplash.com/photo-1545305826-130e269c3633?q=80&w=2000&auto=format&fit=crop') center/cover;
+  color: white;
+  position: relative;
+}
+
+.hero-content {
+  max-width: 850px;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.hero p {
+  font-size: 1.25rem;
+  margin-bottom: 3rem;
+  opacity: 0.95;
+  line-height: 1.6;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.primary-btn {
+  background: #ffd700; /* Gold */
+  color: #0f172a;
+  padding: 1rem 3rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1.1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+}
+
+.primary-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  color: white;
+  padding: 1rem 3rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: 2px solid white;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.secondary-btn:hover {
+  background: rgba(255,255,255,0.2);
+  transform: translateY(-3px);
+}
+
+/* Features Section */
+.features {
+  padding: 6rem 4rem;
+  background: #ffffff;
+  text-align: center;
+  /* Subtle road line pattern */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 50px,
+    rgba(25, 135, 84, 0.03) 50px,
+    rgba(25, 135, 84, 0.03) 100px
+  );
+}
+
+.features h2 {
+  font-size: 2.5rem;
+  color: #0f172a;
+  margin-bottom: 3.5rem;
+  font-weight: 800;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  border-top: 5px solid #198754; /* Road line theme */
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+}
+
+.feature-card .icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.feature-card h3 {
+  color: #198754;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.feature-card p {
+  color: #64748b;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+/* Footer */
+.landing-footer {
+  text-align: center;
+  padding: 2.5rem;
+  background: #0f172a; /* Dark theme footer */
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+/* =========================================
+   DARK THEME & TOGGLE BUTTON
+   ========================================= */
+
+.theme-toggle-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Override fixed position for landing page toggle */
+.landing-nav .theme-toggle-btn {
+  position: static;
+  box-shadow: none;
+  background: #f4f6f9;
+}
+
+/* --- DARK MODE STYLES --- */
+body[data-theme="dark"] {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+body[data-theme="dark"] .content {
+  background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), url("./assets/toll-bg.jpg");
+}
+
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] .features h2,
+body[data-theme="dark"] .feature-card h3 {
+  color: #20c997; /* Lighter green for dark mode */
+}
+
+body[data-theme="dark"] form,
+body[data-theme="dark"] table,
+body[data-theme="dark"] .card,
+body[data-theme="dark"] .login-box,
+body[data-theme="dark"] .feature-card {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+body[data-theme="dark"] form input,
+body[data-theme="dark"] form select,
+body[data-theme="dark"] .login-box input {
+  background-color: #2d2d2d;
+  color: white;
+  border-color: #444;
+}
+
+body[data-theme="dark"] tbody td {
+  color: #b0b0b0;
+}
+
+body[data-theme="dark"] tbody tr:hover {
+  background-color: #2a2a2a;
+}
+
+body[data-theme="dark"] .features {
+  background-color: #121212;
+  background-image: repeating-linear-gradient(
+    90deg, transparent, transparent 50px,
+    rgba(255, 255, 255, 0.02) 50px, rgba(255, 255, 255, 0.02) 100px
+  );
+}
+
+body[data-theme="dark"] .theme-toggle-btn {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: white;
+}
+
+body[data-theme="dark"] .landing-nav {
+  background: rgba(30, 30, 30, 0.95);
+}
+
+body[data-theme="dark"] .landing-nav .login-btn {
+  color: #20c997;
+}
+
+body[data-theme="dark"] .landing-nav .theme-toggle-btn {
+  background: #2d2d2d;
+}
