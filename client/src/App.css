@@ -1,3 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+/* =========================================
+   THEME TOKENS
+   Every component reads from these variables,
+   so light and dark can never drift apart.
+   Inline styles in the JSX use them too,
+   e.g. style={{ background: "var(--bg-card)" }}
+   ========================================= */
+:root {
+  --bg-page: #f4f6f9;
+  --bg-card: #ffffff;
+  --bg-subtle: #f4f6f9;
+  --bg-stripe: #f9f9f9;
+  --bg-input: #ffffff;
+  --bg-features: #ffffff;
+  --bg-nav: rgba(255, 255, 255, 0.95);
+  --bg-toggle: #ffffff;
+  --overlay: rgba(244, 246, 249, 0.92);
+
+  --text: #333333;
+  --text-muted: #777777;
+  --text-table: #444444;
+  --text-heading: #198754;
+  --text-feature-title: #0f172a;
+  --text-feature-body: #64748b;
+
+  --border: #e9ecef;
+  --border-input: #cccccc;
+  --row-hover: #f0faf4;
+
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.1);
+
+  /* Pill badges (also used as icon-box backgrounds) */
+  --badge-green-bg: #d1fae5;
+  --badge-green-text: #065f46;
+  --badge-blue-bg: #dbeafe;
+  --badge-blue-text: #1e40af;
+  --badge-amber-bg: #fef3c7;
+  --badge-amber-text: #92400e;
+  --badge-purple-bg: #f3e8ff;
+  --badge-purple-text: #6b21a8;
+  --badge-red-bg: #fee2e2;
+  --badge-red-text: #991b1b;
+
+  /* Quick-action tiles */
+  --tint-green: #f0faf4;
+  --tint-blue: #f0f6ff;
+  --tint-purple: #f8f3ff;
+
+  /* Status banners */
+  --status-pending-bg: #fff7e6;
+  --status-pending-border: #ffcc66;
+  --status-pending-text: #8a5a00;
+  --status-completed-bg: #e8f8ee;
+  --status-completed-border: #5cc98a;
+  --status-completed-text: #1a7a44;
+  --status-error-bg: #fdeaea;
+  --status-error-border: #ee8888;
+  --status-error-text: #a12c2c;
+
+  /* Disabled buttons */
+  --btn-green-disabled: #9ccbb0;
+  --btn-blue-disabled: #a5c9f0;
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-page: #0f172a;
+  --bg-card: #1e293b;
+  --bg-subtle: #273449;
+  --bg-stripe: #222f44;
+  --bg-input: #0f172a;
+  --bg-features: #0f172a;
+  --bg-nav: rgba(15, 23, 42, 0.95);
+  --bg-toggle: #1e293b;
+  --overlay: rgba(15, 23, 42, 0.93);
+
+  --text: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-table: #cbd5e1;
+  --text-heading: #20c997;
+  --text-feature-title: #f1f5f9;
+  --text-feature-body: #94a3b8;
+
+  --border: #334155;
+  --border-input: #475569;
+  --row-hover: #273449;
+
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.6);
+
+  --badge-green-bg: rgba(34, 197, 94, 0.15);
+  --badge-green-text: #4ade80;
+  --badge-blue-bg: rgba(59, 130, 246, 0.18);
+  --badge-blue-text: #60a5fa;
+  --badge-amber-bg: rgba(245, 158, 11, 0.16);
+  --badge-amber-text: #fbbf24;
+  --badge-purple-bg: rgba(168, 85, 247, 0.18);
+  --badge-purple-text: #c084fc;
+  --badge-red-bg: rgba(239, 68, 68, 0.15);
+  --badge-red-text: #f87171;
+
+  --tint-green: rgba(34, 197, 94, 0.10);
+  --tint-blue: rgba(59, 130, 246, 0.12);
+  --tint-purple: rgba(168, 85, 247, 0.12);
+
+  --status-pending-bg: rgba(245, 158, 11, 0.12);
+  --status-pending-border: #b45309;
+  --status-pending-text: #fbbf24;
+  --status-completed-bg: rgba(34, 197, 94, 0.12);
+  --status-completed-border: #15803d;
+  --status-completed-text: #4ade80;
+  --status-error-bg: rgba(239, 68, 68, 0.12);
+  --status-error-border: #b91c1c;
+  --status-error-text: #f87171;
+
+  --btn-green-disabled: #2f6b4f;
+  --btn-blue-disabled: #2a4a7a;
+}
+
 /* ===========================
    GLOBAL RESET
 =========================== */
@@ -9,8 +132,9 @@
 }
 
 body {
-  background-color: #f4f6f9;
-  color: #333;
+  background-color: var(--bg-page);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ===========================
@@ -28,12 +152,26 @@ body {
   min-height: 100vh;
   width: calc(100% - 260px);
   background-image:
-    linear-gradient(rgba(244, 246, 249, 0.92), rgba(244, 246, 249, 0.92)),
+    linear-gradient(var(--overlay), var(--overlay)),
     url("./assets/toll-bg.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+  transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+/* ===========================
+   COLLAPSIBLE SIDEBAR
+=========================== */
+body.sidebar-collapsed .content {
+  margin-left: 80px !important;
+  width: calc(100% - 80px) !important;
+}
+
+body.sidebar-collapsed main {
+  margin-left: 80px !important;
+  width: calc(100% - 80px) !important;
 }
 
 /* ===========================
@@ -42,7 +180,7 @@ body {
 .content h2 {
   font-size: 26px;
   font-weight: 700;
-  color: #198754;
+  color: var(--text-heading);
   margin-bottom: 24px;
   border-bottom: 2px solid #198754;
   padding-bottom: 10px;
@@ -56,21 +194,24 @@ form {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 30px;
-  background: white;
+  background: var(--bg-card);
+  color: var(--text);
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
 }
 
 form input,
 form select {
   padding: 10px 14px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.3s;
   min-width: 180px;
+  background-color: var(--bg-input);
+  color: var(--text);
 }
 
 form input:focus,
@@ -100,10 +241,10 @@ form button:hover {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: var(--bg-card);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
 }
 
 thead {
@@ -117,21 +258,23 @@ thead th {
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.5px;
+  color: white;
 }
 
 tbody tr {
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid var(--border);
   transition: background-color 0.2s;
 }
 
 tbody tr:hover {
-  background-color: #f0faf4;
+  background-color: var(--row-hover);
 }
 
 tbody td {
   padding: 12px 16px;
   font-size: 14px;
-  color: #444;
+  color: var(--text-table);
+  background-color: transparent;
 }
 
 /* ===========================
@@ -170,8 +313,8 @@ tbody td button:last-child:hover {
    STATUS BADGES
 =========================== */
 .status-active {
-  background-color: #d1fae5;
-  color: #065f46;
+  background-color: var(--badge-green-bg);
+  color: var(--badge-green-text);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
@@ -179,8 +322,8 @@ tbody td button:last-child:hover {
 }
 
 .status-inactive {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: var(--badge-red-bg);
+  color: var(--badge-red-text);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
@@ -198,10 +341,11 @@ tbody td button:last-child:hover {
 }
 
 .card {
-  background: white;
+  background: var(--bg-card);
+  color: var(--text);
   padding: 24px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
   text-align: center;
   border-left: 5px solid #198754;
 }
@@ -214,7 +358,7 @@ tbody td button:last-child:hover {
 
 .card p {
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 6px;
 }
 
@@ -226,21 +370,22 @@ tbody td button:last-child:hover {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f4f6f9;
+  background-color: var(--bg-page);
 }
 
 .login-box {
-  background: white;
+  background: var(--bg-card);
+  color: var(--text);
   padding: 40px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 400px;
 }
 
 .login-box h2 {
   text-align: center;
-  color: #198754;
+  color: var(--text-heading);
   margin-bottom: 24px;
   font-size: 24px;
   font-weight: 700;
@@ -250,10 +395,12 @@ tbody td button:last-child:hover {
   width: 100%;
   padding: 12px 14px;
   margin-bottom: 16px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   font-size: 14px;
   outline: none;
+  background-color: var(--bg-input);
+  color: var(--text);
 }
 
 .login-box input:focus {
@@ -307,221 +454,11 @@ tbody td button:last-child:hover {
 }
 
 /* =========================================
-   LANDING PAGE THEME (HIGHWAY)
-   ========================================= */
-
-.landing-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f4f6f9;
-}
-
-/* Navbar - Glassmorphism effect */
-.landing-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.2rem 4rem;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.landing-nav .logo {
-  font-size: 1.8rem;
-}
-
-.landing-nav .nav-links {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.landing-nav .login-btn {
-  text-decoration: none;
-  color: #198754;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.landing-nav .login-btn:hover {
-  color: #157347;
-}
-
-.landing-nav .register-btn {
-  text-decoration: none;
-  background: #198754;
-  color: white;
-  padding: 0.6rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.landing-nav .register-btn:hover {
-  background: #157347;
-  transform: translateY(-2px);
-}
-
-/* Hero Section - Expressway Image */
-.hero {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 10rem 2rem;
-  /* Proper Aerial Highway Image with a Dark Green Overlay */
-  background: linear-gradient(rgba(15, 23, 42, 0.75), rgba(25, 135, 84, 0.8)), 
-              url('https://images.unsplash.com/photo-1545305826-130e269c3633?q=80&w=2000&auto=format&fit=crop') center/cover;
-  color: white;
-  position: relative;
-}
-
-.hero-content {
-  max-width: 850px;
-  z-index: 2;
-}
-
-.hero h1 {
-  font-size: 4rem;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  line-height: 1.1;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-
-.hero p {
-  font-size: 1.25rem;
-  margin-bottom: 3rem;
-  opacity: 0.95;
-  line-height: 1.6;
-  text-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-}
-
-.primary-btn {
-  background: #ffd700; /* Gold */
-  color: #0f172a;
-  padding: 1rem 3rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 800;
-  font-size: 1.1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-}
-
-.primary-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.6);
-}
-
-.secondary-btn {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(5px);
-  color: white;
-  padding: 1rem 3rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 1.1rem;
-  border: 2px solid white;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.secondary-btn:hover {
-  background: rgba(255,255,255,0.2);
-  transform: translateY(-3px);
-}
-
-/* Features Section */
-.features {
-  padding: 6rem 4rem;
-  background: #ffffff;
-  text-align: center;
-  /* Subtle road line pattern */
-  background-image: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 50px,
-    rgba(25, 135, 84, 0.03) 50px,
-    rgba(25, 135, 84, 0.03) 100px
-  );
-}
-
-.features h2 {
-  font-size: 2.5rem;
-  color: #0f172a;
-  margin-bottom: 3.5rem;
-  font-weight: 800;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.feature-card {
-  background: white;
-  padding: 3rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-  border-top: 5px solid #198754; /* Road line theme */
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-}
-
-.feature-card .icon {
-  font-size: 3rem;
-  margin-bottom: 1.5rem;
-}
-
-.feature-card h3 {
-  color: #198754;
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.feature-card p {
-  color: #64748b;
-  line-height: 1.7;
-  font-size: 1rem;
-}
-
-/* Footer */
-.landing-footer {
-  text-align: center;
-  padding: 2.5rem;
-  background: #0f172a; /* Dark theme footer */
-  color: #94a3b8;
-  font-size: 0.95rem;
-}
-
-/* =========================================
-   DARK THEME & TOGGLE BUTTON
+   THEME TOGGLE BUTTON
    ========================================= */
 
 .theme-toggle-btn {
-  background: transparent;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-input);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -535,86 +472,1207 @@ tbody td button:last-child:hover {
   top: 20px;
   right: 20px;
   z-index: 1000;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background-color: var(--bg-toggle);
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .theme-toggle-btn:hover {
   transform: scale(1.1);
 }
 
-/* Override fixed position for landing page toggle */
-.landing-nav .theme-toggle-btn {
-  position: static;
-  box-shadow: none;
-  background: #f4f6f9;
+/* =========================================
+   DARK MODE EXTRAS
+   ========================================= */
+
+/* Native form controls */
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+  background-color: var(--bg-input);
+  color: var(--text);
+  border-color: var(--border-input);
 }
 
-/* --- DARK MODE STYLES --- */
-body[data-theme="dark"] {
-  background-color: #121212;
-  color: #e0e0e0;
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+  color: #64748b;
 }
 
-body[data-theme="dark"] .content {
-  background-image: linear-gradient(rgba(18, 18, 18, 0.95), rgba(18, 18, 18, 0.95)), url("./assets/toll-bg.jpg");
+/* Headings inside panels */
+body[data-theme="dark"] label,
+body[data-theme="dark"] h4,
+body[data-theme="dark"] h5,
+body[data-theme="dark"] h6 {
+  color: var(--text);
 }
 
-body[data-theme="dark"] h2,
-body[data-theme="dark"] h3,
-body[data-theme="dark"] .features h2,
-body[data-theme="dark"] .feature-card h3 {
-  color: #20c997; /* Lighter green for dark mode */
+/* =========================================================
+   LEGACY INLINE-COLOR REMAP (dark mode only)
+
+   Many pages still hardcode light colors in inline styles
+   (background: "white", color: "#888", border: "1px solid #eee").
+   Chrome stores those as rgb(...) in the DOM, so these rules
+   match the rgb() form and swap in the dark theme colors.
+   Pages that already use var(--...) are unaffected.
+   ========================================================= */
+
+/* Native controls / scrollbars */
+body[data-theme="dark"] { color-scheme: dark; }
+
+/* ---- White and near-white backgrounds -> card ---- */
+body[data-theme="dark"] [style*="background: white"],
+body[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
+body[data-theme="dark"] [style*="background: rgba(255, 255, 255, 0.8"],
+body[data-theme="dark"] [style*="background: rgba(255, 255, 255, 0.9"],
+body[data-theme="dark"] [style*="background-color: white"],
+body[data-theme="dark"] [style*="background-color: rgb(255, 255, 255)"],
+body[data-theme="dark"] [style*="background-color: rgba(255, 255, 255, 0.8"],
+body[data-theme="dark"] [style*="background-color: rgba(255, 255, 255, 0.9"] {
+  background-color: var(--bg-card) !important;
 }
 
-body[data-theme="dark"] form,
-body[data-theme="dark"] table,
-body[data-theme="dark"] .card,
-body[data-theme="dark"] .login-box,
-body[data-theme="dark"] .feature-card {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+/* ---- Off-white backgrounds (table headers, zebra rows) ---- */
+body[data-theme="dark"] [style*="background: rgb(244, 246, 249)"],
+body[data-theme="dark"] [style*="background: rgb(248, 249, 250)"],
+body[data-theme="dark"] [style*="background: rgb(245, 245, 245)"],
+body[data-theme="dark"] [style*="background: whitesmoke"],
+body[data-theme="dark"] [style*="background-color: rgb(244, 246, 249)"],
+body[data-theme="dark"] [style*="background-color: rgb(248, 249, 250)"],
+body[data-theme="dark"] [style*="background-color: rgb(245, 245, 245)"],
+body[data-theme="dark"] [style*="background-color: whitesmoke"] {
+  background-color: var(--bg-subtle) !important;
 }
 
-body[data-theme="dark"] form input,
-body[data-theme="dark"] form select,
-body[data-theme="dark"] .login-box input {
-  background-color: #2d2d2d;
-  color: white;
-  border-color: #444;
+body[data-theme="dark"] [style*="background: rgb(249, 249, 249)"],
+body[data-theme="dark"] [style*="background: rgb(250, 250, 250)"],
+body[data-theme="dark"] [style*="background-color: rgb(249, 249, 249)"],
+body[data-theme="dark"] [style*="background-color: rgb(250, 250, 250)"] {
+  background-color: var(--bg-stripe) !important;
 }
 
-body[data-theme="dark"] tbody td {
-  color: #b0b0b0;
+/* ---- Pale tinted tiles ---- */
+body[data-theme="dark"] [style*="background: rgb(240, 250, 244)"],
+body[data-theme="dark"] [style*="background-color: rgb(240, 250, 244)"] {
+  background-color: var(--tint-green) !important;
 }
 
-body[data-theme="dark"] tbody tr:hover {
-  background-color: #2a2a2a;
+body[data-theme="dark"] [style*="background: rgb(240, 246, 255)"],
+body[data-theme="dark"] [style*="background-color: rgb(240, 246, 255)"] {
+  background-color: var(--tint-blue) !important;
 }
 
-body[data-theme="dark"] .features {
-  background-color: #121212;
-  background-image: repeating-linear-gradient(
-    90deg, transparent, transparent 50px,
-    rgba(255, 255, 255, 0.02) 50px, rgba(255, 255, 255, 0.02) 100px
+body[data-theme="dark"] [style*="background: rgb(248, 243, 255)"],
+body[data-theme="dark"] [style*="background-color: rgb(248, 243, 255)"] {
+  background-color: var(--tint-purple) !important;
+}
+
+/* ---- Pastel badges / alerts: background + matching text ---- */
+body[data-theme="dark"] [style*="background: rgb(209, 250, 229)"],
+body[data-theme="dark"] [style*="background-color: rgb(209, 250, 229)"] {
+  background-color: var(--badge-green-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(6, 95, 70)"] {
+  color: var(--badge-green-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(219, 234, 254)"],
+body[data-theme="dark"] [style*="background-color: rgb(219, 234, 254)"] {
+  background-color: var(--badge-blue-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(30, 64, 175)"] {
+  color: var(--badge-blue-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(254, 243, 199)"],
+body[data-theme="dark"] [style*="background-color: rgb(254, 243, 199)"] {
+  background-color: var(--badge-amber-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(146, 64, 14)"] {
+  color: var(--badge-amber-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(243, 232, 255)"],
+body[data-theme="dark"] [style*="background-color: rgb(243, 232, 255)"] {
+  background-color: var(--badge-purple-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(107, 33, 168)"] {
+  color: var(--badge-purple-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(254, 226, 226)"],
+body[data-theme="dark"] [style*="background-color: rgb(254, 226, 226)"] {
+  background-color: var(--badge-red-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(153, 27, 27)"] {
+  color: var(--badge-red-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(253, 234, 234)"],
+body[data-theme="dark"] [style*="background-color: rgb(253, 234, 234)"] {
+  background-color: var(--status-error-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(161, 44, 44)"] {
+  color: var(--status-error-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(232, 248, 238)"],
+body[data-theme="dark"] [style*="background-color: rgb(232, 248, 238)"] {
+  background-color: var(--status-completed-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(26, 122, 68)"] {
+  color: var(--status-completed-text) !important;
+}
+
+body[data-theme="dark"] [style*="background: rgb(255, 247, 230)"],
+body[data-theme="dark"] [style*="background-color: rgb(255, 247, 230)"] {
+  background-color: var(--status-pending-bg) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(138, 90, 0)"] {
+  color: var(--status-pending-text) !important;
+}
+
+/* ---- Dark grey text -> readable light text ---- */
+body[data-theme="dark"] [style*="color: rgb(0, 0, 0)"],
+body[data-theme="dark"] [style*="color: rgb(34, 34, 34)"],
+body[data-theme="dark"] [style*="color: rgb(51, 51, 51)"],
+body[data-theme="dark"] [style*="color: rgb(68, 68, 68)"] {
+  color: var(--text) !important;
+}
+
+body[data-theme="dark"] [style*="color: rgb(85, 85, 85)"] {
+  color: var(--text-table) !important;
+}
+
+/* ---- Mid grey text -> muted ---- */
+body[data-theme="dark"] [style*="color: rgb(102, 102, 102)"],
+body[data-theme="dark"] [style*="color: rgb(119, 119, 119)"],
+body[data-theme="dark"] [style*="color: rgb(136, 136, 136)"],
+body[data-theme="dark"] [style*="color: rgb(153, 153, 153)"] {
+  color: var(--text-muted) !important;
+}
+
+/* ---- Light borders ---- */
+body[data-theme="dark"] [style*="solid rgb(238, 238, 238)"],
+body[data-theme="dark"] [style*="solid rgb(233, 236, 239)"],
+body[data-theme="dark"] [style*="solid rgb(221, 221, 221)"],
+body[data-theme="dark"] [style*="solid rgb(224, 224, 224)"] {
+  border-color: var(--border) !important;
+}
+
+body[data-theme="dark"] [style*="solid rgb(204, 204, 204)"] {
+  border-color: var(--border-input) !important;
+}
+
+/* ---- Pages that lay a white gradient over the background photo ----
+   An inset shadow paints a dark layer on top of the photo without
+   needing to know the image URL. */
+body[data-theme="dark"] [style*="linear-gradient(rgba(255, 255, 255"] {
+  box-shadow: inset 0 0 0 100vmax rgba(15, 23, 42, 0.93) !important;
+}
+
+/* =========================================
+   BOOTSTRAP COMPONENTS IN DARK MODE
+   (Login, Register, VerifyOtp, ForgotPassword and
+   any page using Bootstrap classes)
+   ========================================= */
+
+body[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+body[data-theme="dark"] .card-body {
+  color: var(--text);
+}
+
+body[data-theme="dark"] .form-label {
+  color: var(--text);
+}
+
+body[data-theme="dark"] .form-control,
+body[data-theme="dark"] .form-select {
+  background-color: var(--bg-input);
+  color: var(--text);
+  border-color: var(--border-input);
+}
+
+body[data-theme="dark"] .form-control:focus,
+body[data-theme="dark"] .form-select:focus {
+  background-color: var(--bg-input);
+  color: var(--text);
+  border-color: #198754;
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+body[data-theme="dark"] .form-control::placeholder {
+  color: #64748b;
+}
+
+body[data-theme="dark"] .input-group-text {
+  background-color: var(--bg-subtle);
+  color: var(--text-muted);
+  border-color: var(--border-input);
+}
+
+body[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+body[data-theme="dark"] .alert-danger {
+  background-color: var(--status-error-bg);
+  color: var(--status-error-text);
+  border-color: var(--status-error-border);
+}
+
+body[data-theme="dark"] .alert-success {
+  background-color: var(--status-completed-bg);
+  color: var(--status-completed-text);
+  border-color: var(--status-completed-border);
+}
+
+body[data-theme="dark"] .alert-warning,
+body[data-theme="dark"] .alert-info {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+  border-color: var(--status-pending-border);
+}
+
+body[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text);
+}
+
+
+/* ==========================================================
+   ITMS LANDING PAGE (highway theme) - scoped under .lp
+   ========================================================== */
+
+/* =========================================
+   ITMS LANDING PAGE — HIGHWAY THEME
+   Everything is scoped under .lp and prefixed lp-
+   so it never collides with your global styles.
+   Light/dark follows your existing body[data-theme].
+   ========================================= */
+
+.lp {
+  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Segoe UI', sans-serif;
+  --font-body: 'Barlow', 'Segoe UI', Tahoma, sans-serif;
+
+  --D: 330px;            /* distance from hero bottom up to the horizon */
+  --road-x: 70%;         /* where the road vanishes, horizontally */
+
+  --brand: #198754;
+  --brand-deep: #0d6a42;
+  --gold: #ffd700;
+  --amber: #ffb81c;
+
+  /* Day */
+  --page: #f3f6f9;
+  --ink: #0b1b2b;
+  --ink-soft: #4a5b6c;
+  --nav-bg: rgba(255, 255, 255, 0.88);
+  --nav-line: rgba(11, 27, 43, 0.1);
+  --brand-text: #198754;
+  --sky-top: #7fc0f2;
+  --sky-bottom: #e9f5ff;
+  --ground: #6fb287;
+  --ground-far: #b9dcc4;
+  --skyline: #a9c3d6;
+  --asphalt: #3b4048;
+  --asphalt-panel: #3d434c;
+  --haze: rgba(255, 248, 220, 0.75);
+  --orb: #ffe27a;
+  --orb-glow: rgba(255, 214, 80, 0.7);
+  --stars-o: 0;
+  --pool-o: 0;
+  --glow: 0.15;
+  --scrim: 247, 251, 255;
+  --hero-text: #0b1b2b;
+  --hero-soft: #2f4256;
+
+  background: var(--page);
+  color: var(--ink);
+  min-height: 100vh;
+  font-family: var(--font-body);
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+body[data-theme="dark"] .lp {
+  --page: #0a1220;
+  --ink: #f1f5f9;
+  --ink-soft: #9fb0c3;
+  --nav-bg: rgba(8, 14, 28, 0.86);
+  --nav-line: rgba(255, 255, 255, 0.09);
+  --brand-text: #20c997;
+  --sky-top: #030813;
+  --sky-bottom: #123047;
+  --ground: #07140f;
+  --ground-far: #0c2a22;
+  --skyline: #071522;
+  --asphalt: #12161d;
+  --asphalt-panel: #1d232d;
+  --haze: rgba(60, 160, 200, 0.55);
+  --orb: #e8f0ff;
+  --orb-glow: rgba(180, 205, 255, 0.45);
+  --stars-o: 1;
+  --pool-o: 1;
+  --glow: 0.9;
+  --scrim: 5, 11, 22;
+  --hero-text: #f4f8ff;
+  --hero-soft: #b6c4d6;
+}
+
+/* Your global `* { font-family }` rule beats inheritance, so set it explicitly */
+.lp,
+.lp * {
+  font-family: var(--font-body);
+}
+
+.lp h1,
+.lp h2,
+.lp h3,
+.lp .lp-num,
+.lp .lp-logo-text,
+.lp .lp-gantry-sign strong {
+  font-family: var(--font-display);
+}
+
+.lp a:focus-visible,
+.lp button:focus-visible {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+/* ===========================
+   NAV
+=========================== */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem clamp(1.25rem, 5vw, 4rem);
+  background: var(--nav-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--nav-line);
+}
+
+.lp-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.lp-logo-text {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--brand-text);
+  line-height: 1;
+}
+
+.lp-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.lp-link {
+  color: var(--brand-text);
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.lp-link:hover {
+  opacity: 0.75;
+}
+
+.lp-register {
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.55rem 1.4rem;
+  border-radius: 6px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.lp-register:hover {
+  background: #157347;
+  transform: translateY(-2px);
+}
+
+.lp-toggle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--nav-line);
+  background: transparent;
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.lp-toggle:hover {
+  background: rgba(127, 140, 160, 0.16);
+  border-color: var(--brand);
+}
+
+.lp-toggle svg {
+  animation: lp-pop 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+@keyframes lp-pop {
+  from { transform: rotate(-90deg) scale(0.4); opacity: 0; }
+}
+
+/* ===========================
+   HERO
+=========================== */
+.lp-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 720px;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom) calc(100% - var(--D)));
+}
+
+.lp-hero-content {
+  position: relative;
+  z-index: 5;
+  max-width: 720px;
+  padding: clamp(4rem, 10vh, 6.5rem) clamp(1.25rem, 5vw, 4rem) 7rem;
+  color: var(--hero-text);
+}
+
+.lp-hero-content h1 {
+  font-size: clamp(3rem, 5.6vw, 5.4rem);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.005em;
+  margin: 0 0 1.5rem;
+  text-wrap: balance;
+  color: var(--hero-text);
+}
+
+.lp-hero-content p {
+  font-size: 1.2rem;
+  line-height: 1.55;
+  max-width: 46ch;
+  margin: 0 0 2.2rem;
+  color: var(--hero-soft);
+}
+
+.lp-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.lp-btn-primary,
+.lp-btn-secondary {
+  display: inline-block;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.95rem 2.1rem;
+  border-radius: 6px;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.lp-btn-primary {
+  background: var(--gold);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
+}
+
+.lp-btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 26px rgba(255, 215, 0, 0.55);
+}
+
+.lp-btn-secondary {
+  color: var(--hero-text);
+  border: 2px solid var(--hero-text);
+  padding: calc(0.95rem - 2px) calc(2.1rem - 2px);
+}
+
+.lp-btn-secondary:hover {
+  background: rgba(127, 140, 160, 0.18);
+  transform: translateY(-3px);
+}
+
+/* Keeps the headline readable over the scene */
+.lp-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--scrim), 0.95) 0%,
+    rgba(var(--scrim), 0.82) 30%,
+    rgba(var(--scrim), 0) 58%
   );
 }
 
-body[data-theme="dark"] .theme-toggle-btn {
-  background-color: #2d2d2d;
-  border-color: #444;
-  color: white;
+/* ===========================
+   HIGHWAY SCENE
+=========================== */
+.lp-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
-body[data-theme="dark"] .landing-nav {
-  background: rgba(30, 30, 30, 0.95);
+.lp-stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--D);
+  opacity: var(--stars-o);
+  transition: opacity 0.5s;
+  background-image:
+    radial-gradient(circle 1.6px at 8% 18%, #fff, transparent),
+    radial-gradient(circle 1.2px at 17% 42%, #fff, transparent),
+    radial-gradient(circle 1.6px at 26% 12%, #fff, transparent),
+    radial-gradient(circle 1.2px at 34% 33%, #fff, transparent),
+    radial-gradient(circle 1.6px at 45% 20%, #fff, transparent),
+    radial-gradient(circle 1.2px at 53% 8%, #fff, transparent),
+    radial-gradient(circle 1.6px at 61% 38%, #fff, transparent),
+    radial-gradient(circle 1.2px at 69% 14%, #fff, transparent),
+    radial-gradient(circle 1.6px at 77% 30%, #fff, transparent),
+    radial-gradient(circle 1.2px at 84% 10%, #fff, transparent),
+    radial-gradient(circle 1.6px at 91% 26%, #fff, transparent),
+    radial-gradient(circle 1.2px at 96% 46%, #fff, transparent);
 }
 
-body[data-theme="dark"] .landing-nav .login-btn {
-  color: #20c997;
+.lp-orb {
+  position: absolute;
+  left: calc(var(--road-x) + 170px);
+  bottom: calc(var(--D) + 170px);
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff 0, var(--orb) 55%, rgba(150, 170, 210, 0.9) 100%);
+  box-shadow: 0 0 60px 20px var(--orb-glow);
 }
 
-body[data-theme="dark"] .landing-nav .theme-toggle-btn {
-  background: #2d2d2d;
+.lp-skyline {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  bottom: var(--D);
+  fill: var(--skyline);
+}
+
+.lp-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--D);
+  background: linear-gradient(to top, var(--ground), var(--ground-far));
+}
+
+/* The road: a tilted plane viewed with perspective.
+   Vanishing point sits exactly on the horizon (600px * cot 61deg ≈ 330px). */
+.lp-persp {
+  position: absolute;
+  bottom: 0;
+  left: var(--road-x);
+  width: 1000px;
+  height: var(--D);
+  margin-left: -500px;
+  perspective: 600px;
+  perspective-origin: 50% 100%;
+  background: var(--asphalt);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.lp-plane {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 5000px;
+  transform-origin: 50% 100%;
+  transform: rotateX(61deg);
+}
+
+.lp-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: #f1f5f9;
+}
+.lp-edge.l { left: 4%; }
+.lp-edge.r { right: 4%; }
+
+.lp-median {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 11px);
+  width: 22px;
+  background: linear-gradient(
+    90deg,
+    var(--amber) 0 7px,
+    transparent 7px 15px,
+    var(--amber) 15px 22px
+  );
+}
+
+.lp-dash {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  background-image: linear-gradient(#f1f5f9 0 130px, transparent 130px);
+  background-size: 100% 300px;
+  background-repeat: repeat-y;
+  animation: lp-flow 0.9s linear infinite;
+}
+.lp-dash.d1 { left: 27%; }
+.lp-dash.d2 { left: 73%; }
+
+@keyframes lp-flow {
+  to { background-position: 0 300px; }
+}
+
+/* Night only: pools of street light sliding past on both shoulders */
+.lp-pools {
+  position: absolute;
+  inset: 0;
+  opacity: var(--pool-o);
+  background-image:
+    radial-gradient(ellipse 260px 120px at 10% 150px, rgba(255, 205, 110, 0.4), transparent 70%),
+    radial-gradient(ellipse 260px 120px at 90% 150px, rgba(255, 205, 110, 0.4), transparent 70%);
+  background-size: 100% 600px;
+  background-repeat: repeat-y;
+  animation: lp-pools 1.8s linear infinite;
+}
+
+@keyframes lp-pools {
+  to { background-position: 0 600px; }
+}
+
+/* Cars: dark low-profile bodies so the lights do the talking */
+.lp-car {
+  --from: -2200px;
+  --to: 300px;
+  --body: #232932;
+  --body-hi: #2f3742;
+  position: absolute;
+  bottom: 0;
+  width: 92px;
+  height: 180px;
+  border-radius: 22px 22px 14px 14px;
+  background: linear-gradient(to bottom, var(--body-hi), var(--body));
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 14px 18px rgba(0, 0, 0, 0.5);
+  animation: lp-drive linear infinite;
+  will-change: transform;
+}
+
+body[data-theme="dark"] .lp-car {
+  --body: #090c11;
+  --body-hi: #11161d;
+}
+
+.lp-car.come { --from: -2800px; }
+
+/* roof / glass, tinted with the car colour */
+.lp-car i {
+  position: absolute;
+  inset: 22% 13% 30% 13%;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.04);
+}
+.lp-car.come i { inset: 30% 13% 22% 13%; }
+
+/* the lights */
+.lp-car::before,
+.lp-car::after {
+  content: '';
+  position: absolute;
+  bottom: 9px;
+  width: 22px;
+  height: 11px;
+  border-radius: 4px;
+}
+.lp-car::before { left: 9px; }
+.lp-car::after { right: 9px; }
+
+.lp-car.away::before,
+.lp-car.away::after {
+  background: #ff4545;
+  box-shadow: 0 0 14px 5px rgba(255, 69, 69, var(--glow));
+}
+
+.lp-car.come::before,
+.lp-car.come::after {
+  background: #fff3c8;
+  box-shadow: 0 0 18px 7px rgba(255, 240, 180, var(--glow));
+}
+
+.lane-a { left: calc(15.5% - 46px); }
+.lane-b { left: calc(38.5% - 46px); }
+.lane-c { left: calc(61.5% - 46px); }
+.lane-d { left: calc(84.5% - 46px); }
+
+@keyframes lp-drive {
+  0%   { transform: translateY(var(--from)); opacity: 0; }
+  6%   { opacity: 1; }
+  100% { transform: translateY(var(--to)); opacity: 1; }
+}
+
+.lp-haze {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--D) - 90px);
+  height: 180px;
+  pointer-events: none;
+  background: radial-gradient(ellipse 36% 50% at var(--road-x) 50%, var(--haze), transparent 72%);
+}
+
+/* Toll gantry in the distance. The lamps flip red to green once on load. */
+.lp-gantry {
+  position: absolute;
+  left: var(--road-x);
+  bottom: 222px;
+  transform: translateX(-50%);
+  width: 330px;
+}
+
+.lp-gantry-sign {
+  position: relative;
+  text-align: center;
+  background: var(--brand-deep);
+  color: #fff;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  padding: 6px 10px 7px;
+  line-height: 1.1;
+}
+
+.lp-gantry-sign span {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.lp-gantry-sign strong {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lp-gantry-sign::before,
+.lp-gantry-sign::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  width: 5px;
+  height: 40px;
+  background: #5b6472;
+}
+.lp-gantry-sign::before { left: 10%; }
+.lp-gantry-sign::after { right: 10%; }
+
+.lp-lamps {
+  display: flex;
+  justify-content: space-around;
+  width: 70%;
+  margin: 6px auto 0;
+}
+
+.lp-lamps i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: #33ff99;
+  box-shadow: 0 0 12px #33ff99;
+  animation: lp-lamp 1.1s ease 0.8s both;
+}
+
+@keyframes lp-lamp {
+  from { background: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; }
+  to   { background: #33ff99; box-shadow: 0 0 12px #33ff99; }
+}
+
+/* ===========================
+   STATS — HIGHWAY SIGN
+=========================== */
+.lp-signwrap {
+  position: relative;
+  z-index: 6;
+  margin-top: -1.5rem;
+  padding: 0 clamp(1rem, 4vw, 4rem);
+}
+
+.lp-sign {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.4rem 1.5rem;
+  background: var(--brand-deep);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  color: #fff;
+}
+
+/* the white border line inset from the panel edge */
+.lp-sign::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.92);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.lp-stat {
+  position: relative;
+  text-align: center;
+  padding: 0.4rem 1rem;
+}
+
+/* dashed divider, like a lane marking */
+.lp-stat + .lp-stat::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8%;
+  bottom: 8%;
+  width: 3px;
+  background: repeating-linear-gradient(to bottom, #fff 0 14px, transparent 14px 28px);
+  opacity: 0.7;
+}
+
+.lp-num {
+  font-size: clamp(2.8rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lp-stat p {
+  margin: 0.4rem 0 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* ===========================
+   FEATURES — THREE LANES
+=========================== */
+.lp-features {
+  padding: 6rem clamp(1.25rem, 5vw, 4rem) 6rem;
+}
+
+.lp-features-head {
+  max-width: 1100px;
+  margin: 0 auto 3rem;
+}
+
+.lp-features-head h2 {
+  font-size: clamp(2.6rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1;
+  margin: 0 0 1rem;
+  color: var(--ink);
+}
+
+.lp-features-head p {
+  max-width: 62ch;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.lp-lanes {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1100px;
+  margin: 0 auto;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.3px) 0 0 / 7px 7px,
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2)),
+    var(--asphalt-panel);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* solid edge lines along the top and bottom of the road */
+.lp-lanes::before,
+.lp-lanes::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(241, 245, 249, 0.85);
+}
+.lp-lanes::before { top: 14px; }
+.lp-lanes::after { bottom: 14px; }
+
+.lp-lane {
+  position: relative;
+  padding: 4rem 2.2rem 3.8rem;
+  color: #fff;
+  transition: background-color 0.3s;
+}
+
+.lp-lane-sign {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin-bottom: 1.3rem;
+  background: var(--brand-deep);
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.25s ease;
+}
+
+.lp-lane-sign::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+}
+
+/* painted lane arrow */
+.lp-arrow {
+  position: absolute;
+  top: 3.6rem;
+  right: 2rem;
+  width: 30px;
+  height: 90px;
+  color: #fff;
+  opacity: 0.13;
+}
+
+/* headlight glow rising from the bottom of the lane on hover */
+.lp-lane::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(ellipse 70% 55% at 50% 100%, rgba(255, 236, 170, 0.16), transparent 70%);
+}
+
+.lp-lane:hover::after { opacity: 1; }
+.lp-lane:hover .lp-lane-sign { transform: translateY(-3px); }
+
+.lp-lane + .lp-lane::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12%;
+  bottom: 12%;
+  width: 4px;
+  background: repeating-linear-gradient(to bottom, #f1f5f9 0 30px, transparent 30px 60px);
+  opacity: 0.6;
+}
+
+.lp-lane h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 0 0 0.7rem;
+  color: #fff;
+}
+
+.lp-lane p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ===========================
+   CTA + FOOTER
+=========================== */
+.lp-cta {
+  background: var(--brand-deep);
+  color: #fff;
+  padding: 5rem clamp(1.25rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.lp-cta h2 {
+  font-size: clamp(2.6rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1;
+  margin: 0 0 0.8rem;
+  color: #fff;
+}
+
+.lp-cta p {
+  max-width: 50ch;
+  margin: 0 auto 2rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.lp-footer {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2.6rem clamp(1.25rem, 5vw, 4rem) 2.2rem;
+  background: #080f1c;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+/* rumble strip along the shoulder */
+.lp-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, var(--amber) 0 24px, #11182a 24px 48px);
+}
+
+.lp-footer p {
+  margin: 0;
+}
+
+.lp-footer-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.lp-footer-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.lp-footer-links a:hover {
+  color: #fff;
+}
+
+/* ===========================
+   RESPONSIVE
+=========================== */
+@media (max-width: 900px) {
+  .lp { --road-x: 50%; }
+
+  .lp-hero {
+    min-height: 840px;
+    align-items: flex-start;
+  }
+
+  .lp-hero-content {
+    max-width: none;
+    padding-top: 3.2rem;
+    padding-bottom: 0;
+  }
+
+  .lp-hero-content h1 { font-size: clamp(2.8rem, 12vw, 4rem); }
+  .lp-hero-content p { font-size: 1.1rem; }
+
+  .lp-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(var(--scrim), 0.95) 0%,
+      rgba(var(--scrim), 0.88) 55%,
+      rgba(var(--scrim), 0) 68%
+    );
+  }
+
+  .lp-orb { left: 62%; }
+
+  .lp-sign { grid-template-columns: repeat(2, 1fr); row-gap: 1.6rem; }
+  .lp-stat:nth-child(3)::before { display: none; }
+
+  .lp-lanes { grid-template-columns: 1fr; }
+  .lp-lane { padding: 3rem 1.6rem; }
+  .lp-lane + .lp-lane::before {
+    left: 10%;
+    right: 10%;
+    top: 0;
+    bottom: auto;
+    width: auto;
+    height: 4px;
+    background: repeating-linear-gradient(to right, #f1f5f9 0 30px, transparent 30px 60px);
+  }
+
+  .lp-nav-links { gap: 0.7rem; }
+  .lp-register { padding: 0.5rem 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-dash,
+  .lp-pools,
+  .lp-car,
+  .lp-lamps i,
+  .lp-toggle svg {
+    animation: none;
+  }
+  .lp-car { transform: translateY(-600px); opacity: 1; }
+  .lp-car.come { transform: translateY(-1100px); }
+}
+
+
+/* =========================================
+   DASHBOARD POLISH
+   ========================================= */
+
+/* Keep page headings (and their green underline) clear of the
+   fixed dark-mode button in the top-right corner */
+.content h2 {
+  margin-right: 56px !important; /* beats inline margin on page headings */
+}
+
+/* Phones: the sidebar is a slide-in drawer, so leave room for
+   its menu button at the top-left instead */
+@media (max-width: 768px) {
+  .content {
+    padding-top: 68px;
+  }
+
+  .content h2 {
+    margin-right: 0 !important;
+  }
 }

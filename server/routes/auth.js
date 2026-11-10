@@ -6,6 +6,8 @@ const {
   login,
   verifyOtp,
   verifyLoginOtp,
+  forgotPassword, // <-- ADDED
+  resetPassword,  // <-- ADDED
 } = require("../controllers/authController");
 
 // Register user (public = Driver, Admin token = any role)
@@ -19,5 +21,9 @@ router.post("/login", login);
 
 // Verify login OTP (Toll Attendants)
 router.post("/verify-login-otp", verifyLoginOtp);
+
+// Forgot Password routes (NEW)
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 module.exports = router;

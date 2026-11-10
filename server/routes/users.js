@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-
 const {
   getUsers,
   getUserById,
@@ -14,7 +13,7 @@ router.get("/", getUsers);
 router.get("/:id", getUserById);
 router.post("/", createUser);
 router.put("/:id", updateUser);
-router.put("/:id/password", changePassword);
+router.put("/:id/password", changePassword); // <-- CHANGE PASSWORD ROUTE
 router.delete("/:id", deleteUser);
 
 module.exports = router;

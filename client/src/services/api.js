@@ -60,9 +60,11 @@ export const deleteTollGate = (id) =>
   API.delete(`/tollgates/${id}`);
 
 // ================= TOLL BOOTHS =================
+// FIXED: Now fetches from /tollgates to satisfy the FK constraint
+// in the transactions table (transactions.gate_id -> toll_gates.gate_id)
 
 export const getTollBooths = () =>
-  API.get("/tollbooths");
+  API.get("/tollgates");
 
 // ================= M-PESA =================
 

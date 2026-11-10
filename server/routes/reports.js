@@ -7,6 +7,7 @@ const {
   getActivityLog,
 } = require("../controllers/reportController");
 
+// Routes for the charts and tables
 router.get("/revenue", getRevenueReport);
 router.get("/traffic", getTrafficReport);
 router.get("/activity", getActivityLog);

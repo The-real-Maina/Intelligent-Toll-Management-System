@@ -48,8 +48,9 @@ function Users() {
     setMessage({ type: "", text: "" });
 
     try {
-      // Admin bypasses OTP because we will set is_verified to 1 directly in backend for admin-created users
-      await API.post("/auth/register", formData);
+      // FIXED: Posting to /users (Admin create route) instead of /auth/register
+      // This bypasses OTP verification automatically.
+      await API.post("/users", formData);
 
       setMessage({ type: "success", text: "User created successfully!" });
       setFormData({ full_name: "", email: "", phone: "", password: "", role: "Toll Attendant" });
