@@ -3,14 +3,23 @@ const { logAction } = require("./auditController");
 
 const getWallet = async (req, res) => {
   try {
-    const [userRows] = await db.query("SELECT wallet_balance FROM users WHERE user_id = ?", [req.user.user_id]);
+    const [userRows] = await db.query("SELECT wallet_balance, company_id FROM users WHERE user_id = ?", [req.user.user_id]);
+    const companyId = userRows[0]?.company_id;
+
     const [history] = await db.query(
-      "SELECT * FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 10",
-      [req.user.user_id]
+      "SELECT * FROM wallet_transactions WHERE user_id = ? OR company_id = ? ORDER BY created_at DESC LIMIT 10",
+      [req.user.user_id, companyId]
     );
+
+    let companyBalance = 0;
+    if (companyId) {
+      const [companyRows] = await db.query("SELECT wallet_balance FROM companies WHERE company_id = ?", [companyId]);
+      companyBalance = companyRows[0]?.wallet_balance || 0;
+    }
 
     res.json({
       balance: userRows[0]?.wallet_balance || 0,
+      company_balance: companyBalance,
       history
     });
   } catch (err) {

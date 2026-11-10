@@ -1,5 +1,6 @@
 const mpesaService = require('../services/mpesaService');
 const db = require('../config/db');
+const { creditTopup, failTopup } = require('../services/topupService');
 
 // In-memory map: CheckoutRequestID -> { payment_id, transaction_id, status }
 // NOTE: resets on server restart. Fine for sandbox testing; for production
@@ -92,6 +93,39 @@ exports.initiatePayment = async (req, res) => {
   }
 };
 
+// Handles the callback for a company wallet top-up (stored in wallet_topups).
+// Money is only credited after Safaricom itself confirms the payment.
+async function handleTopupCallback(topup, callback) {
+  const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = callback;
+
+  try {
+    if (ResultCode === 0) {
+      const items = {};
+      (CallbackMetadata?.Item || []).forEach((item) => {
+        items[item.Name] = item.Value;
+      });
+
+      const check = await mpesaService.queryStkPush(CheckoutRequestID);
+      const amountMatches = Number(items.Amount) === Number(topup.amount);
+
+      if (check.state === 'success' && amountMatches) {
+        await creditTopup(topup.topup_id, items.MpesaReceiptNumber);
+      } else {
+        // Could not confirm (yet). Leave it pending; the dashboard poll will settle it.
+        console.warn('Top-up callback not confirmed:', {
+          topup_id: topup.topup_id,
+          state: check.state,
+          amountMatches,
+        });
+      }
+    } else {
+      await failTopup(topup.topup_id, ResultDesc);
+    }
+  } catch (err) {
+    console.error('Top-up callback error:', err);
+  }
+}
+
 // Safaricom calls this. Must stay public (no auth middleware).
 exports.handleCallback = async (req, res) => {
   const callback = req.body?.Body?.stkCallback;
@@ -102,6 +136,22 @@ exports.handleCallback = async (req, res) => {
 
   const { CheckoutRequestID, ResultCode, ResultDesc, CallbackMetadata } = callback;
   console.log('M-Pesa callback received:', { ResultCode, ResultDesc });
+
+  // Is this a company wallet top-up?
+  try {
+    const [topupRows] = await db.query(
+      'SELECT * FROM wallet_topups WHERE checkout_request_id = ?',
+      [CheckoutRequestID]
+    );
+    if (topupRows.length > 0) {
+      await handleTopupCallback(topupRows[0], callback);
+      return res.status(200).json({ message: 'Callback received' });
+    }
+  } catch (err) {
+    console.error('Top-up lookup error:', err);
+  }
+
+  // Otherwise it's a toll payment
   const tracked = pendingTransactions.get(CheckoutRequestID);
 
   if (ResultCode === 0) {

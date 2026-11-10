@@ -12,9 +12,9 @@ const getPayments = async (req, res) => {
          LEFT JOIN toll_transactions t ON p.transaction_id = t.transaction_id
          LEFT JOIN vehicles v ON t.vehicle_id = v.vehicle_id
          LEFT JOIN toll_gates g ON t.booth_id = g.gate_id
-         WHERE v.user_id = ?
+         WHERE v.user_id = ? OR v.company_id = ?
          ORDER BY p.payment_date DESC`,
-        [req.user.user_id]
+        [req.user.user_id, req.user.company_id]
       );
     } else {
       [rows] = await db.query(`
@@ -37,7 +37,7 @@ const getPaymentById = async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await db.query(
-      `SELECT p.*, v.plate_number, v.owner_name, v.user_id AS vehicle_owner_id, g.gate_name
+      `SELECT p.*, v.plate_number, v.owner_name, v.user_id AS vehicle_owner_id, v.company_id AS vehicle_company_id, g.gate_name
        FROM payments p
        LEFT JOIN toll_transactions t ON p.transaction_id = t.transaction_id
        LEFT JOIN vehicles v ON t.vehicle_id = v.vehicle_id
@@ -47,13 +47,13 @@ const getPaymentById = async (req, res) => {
     );
     if (rows.length === 0) return res.status(404).json({ message: "Payment not found" });
     const payment = rows[0];
-    if (req.user?.role === "Driver" && payment.vehicle_owner_id !== req.user.user_id) {
+    if (req.user?.role === "Driver" && payment.vehicle_owner_id !== req.user.user_id && payment.vehicle_company_id !== req.user.company_id) {
       return res.status(403).json({ message: "Access denied" });
     }
     delete payment.vehicle_owner_id;
+    delete payment.vehicle_company_id;
     res.json(payment);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Error fetching payment" });
   }
 };
@@ -67,12 +67,13 @@ const createPayment = async (req, res) => {
   }
 
   if (req.user?.role === "Driver") {
-    const [vehicleRows] = await db.query("SELECT user_id, is_blacklisted FROM vehicles WHERE vehicle_id = ?", [vehicle_id]);
+    const [vehicleRows] = await db.query("SELECT user_id, company_id, is_blacklisted FROM vehicles WHERE vehicle_id = ?", [vehicle_id]);
     if (vehicleRows.length === 0) return res.status(404).json({ message: "Vehicle not found" });
-    if (vehicleRows[0].user_id !== req.user.user_id) {
-      return res.status(403).json({ message: "You can only pay for your own vehicle" });
+    const v = vehicleRows[0];
+    if (v.user_id !== req.user.user_id && v.company_id !== req.user.company_id) {
+      return res.status(403).json({ message: "You can only pay for your own or your company's vehicles" });
     }
-    if (vehicleRows[0].is_blacklisted) {
+    if (v.is_blacklisted) {
       return res.status(403).json({ message: "This vehicle is blacklisted. Contact admin." });
     }
   }
@@ -86,50 +87,76 @@ const createPayment = async (req, res) => {
   try {
     await conn.beginTransaction();
 
+    // 🟢 WALLET DEDUCTION
     if (payment_method === "Wallet" && req.user?.role === "Driver") {
-      const [userRows] = await conn.query("SELECT wallet_balance FROM users WHERE user_id = ?", [req.user.user_id]);
-      const currentBalance = parseFloat(userRows[0].wallet_balance || 0);
+      // Look up the vehicle to see if it's a company vehicle
+      const [vehRows] = await conn.query("SELECT company_id FROM vehicles WHERE vehicle_id = ?", [vehicle_id]);
+      const companyId = vehRows[0]?.company_id;
 
-      if (currentBalance < amount) {
-        await conn.rollback();
-        return res.status(400).json({ message: `Insufficient wallet balance. You have KES ${currentBalance.toFixed(2)}` });
+      if (companyId) {
+        // 🏢 Deduct from COMPANY wallet
+        const [companyRows] = await conn.query("SELECT wallet_balance FROM companies WHERE company_id = ?", [companyId]);
+        const companyBalance = parseFloat(companyRows[0]?.wallet_balance || 0);
+
+        if (companyBalance < amount) {
+          await conn.rollback();
+          return res.status(400).json({ message: `Insufficient company wallet balance. Company has KES ${companyBalance.toFixed(2)}` });
+        }
+
+        await conn.query(
+          "UPDATE companies SET wallet_balance = wallet_balance - ? WHERE company_id = ?",
+          [amount, companyId]
+        );
+
+        await conn.query(
+          "INSERT INTO wallet_transactions (user_id, company_id, amount, type, description) VALUES (?, ?, ?, 'debit', ?)",
+          [req.user.user_id, companyId, amount, `Fleet toll payment at Gate ID ${gate_id}`]
+        );
+      } else {
+        // 👤 Deduct from DRIVER personal wallet
+        const [userRows] = await conn.query("SELECT wallet_balance FROM users WHERE user_id = ?", [req.user.user_id]);
+        const currentBalance = parseFloat(userRows[0]?.wallet_balance || 0);
+
+        if (currentBalance < amount) {
+          await conn.rollback();
+          return res.status(400).json({ message: `Insufficient wallet balance. You have KES ${currentBalance.toFixed(2)}` });
+        }
+
+        await conn.query(
+          "UPDATE users SET wallet_balance = wallet_balance - ? WHERE user_id = ?",
+          [amount, req.user.user_id]
+        );
+
+        await conn.query(
+          "INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, 'debit', ?)",
+          [req.user.user_id, amount, `Toll payment at Gate ID ${gate_id}`]
+        );
       }
-
-      await conn.query(
-        "UPDATE users SET wallet_balance = wallet_balance - ? WHERE user_id = ?",
-        [amount, req.user.user_id]
-      );
-
-      await conn.query(
-        "INSERT INTO wallet_transactions (user_id, amount, type, description) VALUES (?, ?, 'debit', ?)",
-        [req.user.user_id, amount, `Toll payment at Gate ID ${gate_id}`]
-      );
     }
 
-    // 🚨 THE FIX: Insert into toll_transactions and use booth_id
     const [txResult] = await conn.query(
-      `INSERT INTO toll_transactions (vehicle_id, booth_id, amount, payment_status) 
+      `INSERT INTO toll_transactions (vehicle_id, booth_id, amount, payment_status)
        VALUES (?, ?, ?, 'Paid')`,
       [vehicle_id, gate_id, amount]
     );
     const transaction_id = txResult.insertId;
-    
+
     const [payResult] = await conn.query(
-      `INSERT INTO payments (transaction_id, reference_number, amount, payment_method, status) 
+      `INSERT INTO payments (transaction_id, reference_number, amount, payment_method, status)
        VALUES (?, ?, ?, ?, 'completed')`,
       [transaction_id, reference_number, amount, payment_method]
     );
-    
+
     await conn.commit();
-    
+
     await logAction(req.user?.user_id || null, "PAYMENT_MADE", `Paid KES ${amount} via ${payment_method}`);
     await createNotification(req.user?.user_id || null, "Payment Successful", `Your payment of KES ${amount} was recorded. Ref: ${reference_number}`);
-    
-    res.status(201).json({ 
-      message: "Payment recorded successfully", 
-      payment_id: payResult.insertId, 
-      transaction_id, 
-      reference_number 
+
+    res.status(201).json({
+      message: "Payment recorded successfully",
+      payment_id: payResult.insertId,
+      transaction_id,
+      reference_number
     });
 
   } catch (err) {
@@ -185,7 +212,6 @@ const verifyPayment = async (req, res) => {
       [reference]
     );
     if (rows.length === 0) return res.status(404).json({ message: "INVALID: Payment not found." });
-
     const payment = rows[0];
     if (payment.is_blacklisted) {
       return res.status(403).json({ message: `🚨 BLACKLISTED VEHICLE: ${payment.blacklist_reason || "Contact Admin"}. Do NOT allow passage.` });
@@ -218,21 +244,15 @@ const recordCashPayment = async (req, res) => {
     const conn = await db.getConnection();
     try {
       await conn.beginTransaction();
-      
-      // 🚨 THE FIX: Insert into toll_transactions and use booth_id
       const [txResult] = await conn.query(
-        `INSERT INTO toll_transactions (vehicle_id, booth_id, amount, payment_status) 
-         VALUES (?, ?, ?, 'Paid')`,
+        `INSERT INTO toll_transactions (vehicle_id, booth_id, amount, payment_status) VALUES (?, ?, ?, 'Paid')`,
         [vehicle.vehicle_id, gate_id, amount]
       );
       const transaction_id = txResult.insertId;
-      
       await conn.query(
-        `INSERT INTO payments (transaction_id, reference_number, amount, payment_method, status) 
-         VALUES (?, ?, ?, 'Cash', 'completed')`,
+        `INSERT INTO payments (transaction_id, reference_number, amount, payment_method, status) VALUES (?, ?, ?, 'Cash', 'completed')`,
         [transaction_id, reference_number, amount]
       );
-      
       await conn.commit();
       await logAction(req.user?.user_id || null, "CASH_PAYMENT", `Recorded cash of KES ${amount} for ${plate_number}`);
       res.status(201).json({ message: "Cash payment recorded successfully", reference_number, plate_number, amount });

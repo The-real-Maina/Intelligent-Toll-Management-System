@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-/* ---------- Theme (shares your existing body[data-theme] system) ---------- */
+/* ---------- Theme ---------- */
 function useTheme() {
   const [theme, setTheme] = useState(() => {
     try {
@@ -20,8 +20,6 @@ function useTheme() {
 }
 
 /* ---------- Scene data ---------- */
-// Driving on the left: cars on the left half drive away from us (tail-lights),
-// cars on the right half come toward us (headlights).
 const CARS = [
   { dir: 'away', lane: 'a', color: '#e63946', delay: '-3s',   dur: '15s' },
   { dir: 'away', lane: 'a', color: '#2563eb', delay: '-10.5s', dur: '15s' },
@@ -41,7 +39,7 @@ const STATS = [
   { value: '24/7', label: 'Automated operations' },
   { value: '100%', label: 'Cashless payments' },
   { value: '0s', label: 'Gate wait time' },
-  { value: '3', label: 'Secure user roles' },
+  { value: '4', label: 'Secure user roles' },
 ];
 
 const LANES = [
@@ -67,7 +65,7 @@ const LANES = [
   },
   {
     title: 'Role-based access',
-    text: 'Dedicated dashboards for Drivers and Administrators, ensuring strict operational control.',
+    text: 'Dedicated dashboards for Drivers, Toll Attendants, Companies, and Administrators.',
     icon: (
       <>
         <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
@@ -187,6 +185,7 @@ export default function LandingPage() {
       <nav className="lp-nav">
         <Logo />
         <div className="lp-nav-links">
+          <Link to="/register-company" className="lp-link">Register Company</Link>
           <Link to="/login" className="lp-link">Login</Link>
           <Link to="/register" className="lp-register">Register</Link>
           <ThemeToggle theme={theme} onToggle={toggleTheme} />
@@ -206,12 +205,13 @@ export default function LandingPage() {
           </p>
           <div className="lp-buttons">
             <Link to="/register" className="lp-btn-primary">Get started</Link>
+            <Link to="/register-company" className="lp-btn-secondary">🏢 Register Company</Link>
             <Link to="/login" className="lp-btn-secondary">Sign in</Link>
           </div>
         </div>
       </header>
 
-      {/* Stats on a highway sign */}
+      {/* Stats */}
       <section className="lp-signwrap" aria-label="ITMS at a glance">
         <div className="lp-sign">
           {STATS.map((s) => (
@@ -223,7 +223,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features: three lanes */}
+      {/* Features */}
       <section className="lp-features">
         <div className="lp-features-head">
           <h2>Investing in a faster future.</h2>
@@ -261,14 +261,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Closing call to action */}
+      {/* Closing CTA */}
       <section className="lp-cta">
         <h2>Your lane is open.</h2>
         <p>Register your vehicle once and drive through every toll gate without stopping.</p>
         <Link to="/register" className="lp-btn-primary">Create your account</Link>
       </section>
 
-      {/* Footer with a rumble strip */}
+      {/* Footer */}
       <footer className="lp-footer">
         <p>&copy; {new Date().getFullYear()} Intelligent Toll Management System. All rights reserved.</p>
         <div className="lp-footer-links">

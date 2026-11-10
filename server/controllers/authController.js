@@ -128,6 +128,24 @@ const login = async (req, res) => {
       return res.json({ message: "Enter OTP", otp_required: true, email: user.email, ...demoOtp(otp) });
     }
 
+    // Company Admins must have their company approved first
+    if (user.role === "Company Admin") {
+      const [companyRows] = await db.query(
+        "SELECT status FROM companies WHERE company_id = ?",
+        [user.company_id]
+      );
+      if (companyRows.length === 0) {
+        return res.status(403).json({ message: "No company linked to this account." });
+      }
+      const status = companyRows[0].status;
+      if (status === "Pending") {
+        return res.status(403).json({ message: "Your company registration is pending ITMS Admin approval. Please check back later." });
+      }
+      if (status === "Rejected") {
+        return res.status(403).json({ message: "Your company registration was rejected by the ITMS Admin. Please contact support." });
+      }
+    }
+
     if (!user.is_verified) {
       const otp = await issueOtp(user);
       return res.status(403).json({ message: "Verify email", needs_verification: true, email: user.email, ...demoOtp(otp) });

@@ -18,8 +18,6 @@ function Sidebar() {
   });
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches);
 
-  // The mobile menu is "open" only for the page it was opened on, so it closes
-  // automatically on navigation without needing an effect.
   const [openPath, setOpenPath] = useState(null);
   const mobileOpen = openPath === location.pathname;
   const setMobileOpen = (open) => setOpenPath(open ? location.pathname : null);

@@ -1,14 +1,27 @@
 const db = require("../config/db");
 const { logAction } = require("./auditController");
 
-// Get all vehicles.
 const getVehicles = async (req, res) => {
   try {
     let rows;
     if (req.user.role === "Driver") {
-      [rows] = await db.query("SELECT * FROM vehicles WHERE user_id = ?", [req.user.user_id]);
+      // Drivers see their own vehicles + their company's fleet
+      [rows] = await db.query(
+        `SELECT v.*, c.name AS company_name
+         FROM vehicles v
+         LEFT JOIN companies c ON v.company_id = c.company_id
+         WHERE v.user_id = ? OR v.company_id = ?
+         ORDER BY v.created_at DESC`,
+        [req.user.user_id, req.user.company_id]
+      );
+    } else if (req.user.role === "Company Admin") {
+      // Company Admin sees only their fleet
+      [rows] = await db.query(
+        "SELECT * FROM vehicles WHERE company_id = ?",
+        [req.user.company_id]
+      );
     } else {
-      [rows] = await db.query("SELECT * FROM vehicles");
+      [rows] = await db.query("SELECT * FROM vehicles ORDER BY created_at DESC");
     }
     res.json(rows);
   } catch (err) {
@@ -17,14 +30,13 @@ const getVehicles = async (req, res) => {
   }
 };
 
-// Get one vehicle.
 const getVehicleById = async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await db.query("SELECT * FROM vehicles WHERE vehicle_id = ?", [id]);
     if (rows.length === 0) return res.status(404).json({ message: "Vehicle not found" });
     const vehicle = rows[0];
-    if (req.user.role === "Driver" && vehicle.user_id !== req.user.user_id) {
+    if (req.user.role === "Driver" && vehicle.user_id !== req.user.user_id && vehicle.company_id !== req.user.company_id) {
       return res.status(403).json({ message: "Access denied" });
     }
     res.json(vehicle);
@@ -33,7 +45,6 @@ const getVehicleById = async (req, res) => {
   }
 };
 
-// Create vehicle.
 const createVehicle = async (req, res) => {
   try {
     const { plate_number, owner_name, vehicle_type, owner_phone } = req.body;
@@ -50,15 +61,16 @@ const createVehicle = async (req, res) => {
   }
 };
 
-// Update vehicle.
 const updateVehicle = async (req, res) => {
   try {
     const { id } = req.params;
     const { plate_number, owner_name, vehicle_type, owner_phone } = req.body;
     if (req.user.role === "Driver") {
-      const [existing] = await db.query("SELECT user_id FROM vehicles WHERE vehicle_id = ?", [id]);
+      const [existing] = await db.query("SELECT user_id, company_id FROM vehicles WHERE vehicle_id = ?", [id]);
       if (existing.length === 0) return res.status(404).json({ message: "Vehicle not found" });
-      if (existing[0].user_id !== req.user.user_id) return res.status(403).json({ message: "Access denied" });
+      if (existing[0].user_id !== req.user.user_id && existing[0].company_id !== req.user.company_id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
     }
     const [result] = await db.query(
       `UPDATE vehicles SET plate_number = ?, owner_name = ?, vehicle_type = ?, owner_phone = ? WHERE vehicle_id = ?`,
@@ -71,14 +83,15 @@ const updateVehicle = async (req, res) => {
   }
 };
 
-// Delete vehicle.
 const deleteVehicle = async (req, res) => {
   try {
     const { id } = req.params;
     if (req.user.role === "Driver") {
-      const [existing] = await db.query("SELECT user_id FROM vehicles WHERE vehicle_id = ?", [id]);
+      const [existing] = await db.query("SELECT user_id, company_id FROM vehicles WHERE vehicle_id = ?", [id]);
       if (existing.length === 0) return res.status(404).json({ message: "Vehicle not found" });
-      if (existing[0].user_id !== req.user.user_id) return res.status(403).json({ message: "Access denied" });
+      if (existing[0].user_id !== req.user.user_id) {
+        return res.status(403).json({ message: "Only the owner can delete this vehicle." });
+      }
     }
     const [result] = await db.query("DELETE FROM vehicles WHERE vehicle_id = ?", [id]);
     if (result.affectedRows === 0) return res.status(404).json({ message: "Vehicle not found" });
@@ -88,7 +101,6 @@ const deleteVehicle = async (req, res) => {
   }
 };
 
-// Blacklist toggle (Admin only)
 const toggleBlacklist = async (req, res) => {
   try {
     const { id } = req.params;

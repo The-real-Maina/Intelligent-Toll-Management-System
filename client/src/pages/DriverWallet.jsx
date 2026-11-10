@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import API from "../services/api";
-import { FaWallet, FaPlusCircle } from "react-icons/fa";
+import { FaWallet, FaPlusCircle, FaBuilding } from "react-icons/fa";
 
 export default function DriverWallet() {
-  const [wallet, setWallet] = useState({ balance: 0, history: [] });
+  const [wallet, setWallet] = useState({ balance: 0, company_balance: 0, history: [] });
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -18,7 +18,9 @@ export default function DriverWallet() {
     (async () => {
       try {
         const res = await API.get("/wallet");
-        if (!cancelled) setWallet({ balance: 0, history: [], ...res.data });
+        if (!cancelled) {
+          setWallet({ balance: 0, company_balance: 0, history: [], ...res.data });
+        }
       } catch (err) {
         console.error(err);
       }
@@ -53,38 +55,45 @@ export default function DriverWallet() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "30px", marginTop: "20px" }}>
 
-          {/* Balance Card */}
+          {/* Personal Wallet */}
           <div style={{ background: "linear-gradient(135deg, #198754, #0d6efd)", padding: "40px", borderRadius: "16px", color: "white", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
             <FaWallet size={50} style={{ marginBottom: "15px", opacity: 0.8 }} />
-            <p style={{ fontSize: "18px", margin: 0, opacity: 0.9 }}>Available Balance</p>
+            <p style={{ fontSize: "18px", margin: 0, opacity: 0.9 }}>My Personal Wallet</p>
             <h1 style={{ fontSize: "56px", margin: "10px 0", fontWeight: "800" }}>
               KES {parseFloat(wallet.balance || 0).toLocaleString("en-KE", { minimumFractionDigits: 2 })}
             </h1>
-            <p style={{ fontSize: "14px", margin: 0, opacity: 0.8 }}>Use your wallet to pay tolls instantly without M-Pesa prompts.</p>
+            <p style={{ fontSize: "14px", margin: 0, opacity: 0.8 }}>Used for your personal vehicles.</p>
           </div>
 
-          {/* Top Up Card */}
-          <div style={{ background: "var(--bg-card)", padding: "40px", borderRadius: "16px", boxShadow: "var(--shadow)", border: "1px solid var(--border)" }}>
-            <h3 style={{ marginBottom: "20px", color: "var(--text)" }}>Top Up Wallet</h3>
-            {message.text && <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`}>{message.text}</div>}
-
-            <form onSubmit={handleTopUp} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-              <div>
-                <label style={{ fontWeight: "bold", display: "block", marginBottom: "5px", color: "var(--text)" }}>Amount (KES)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 1000"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  style={{ width: "100%", padding: "15px", borderRadius: "8px", border: "1px solid var(--border-input)", fontSize: "18px", background: "var(--bg-input)", color: "var(--text)" }}
-                  required
-                />
-              </div>
-              <button type="submit" className="btn btn-success" disabled={loading} style={{ padding: "15px", fontWeight: "bold", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-                <FaPlusCircle /> {loading ? "Processing..." : "Top Up via M-Pesa"}
-              </button>
-            </form>
+          {/* Company Wallet */}
+          <div style={{ background: "linear-gradient(135deg, #6f42c1, #0d6efd)", padding: "40px", borderRadius: "16px", color: "white", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}>
+            <FaBuilding size={50} style={{ marginBottom: "15px", opacity: 0.8 }} />
+            <p style={{ fontSize: "18px", margin: 0, opacity: 0.9 }}>Company Wallet</p>
+            <h1 style={{ fontSize: "56px", margin: "10px 0", fontWeight: "800" }}>
+              KES {parseFloat(wallet.company_balance || 0).toLocaleString("en-KE", { minimumFractionDigits: 2 })}
+            </h1>
+            <p style={{ fontSize: "14px", margin: 0, opacity: 0.8 }}>Used automatically when paying for fleet vehicles.</p>
           </div>
+
+        </div>
+
+        {/* Top Up Personal Wallet */}
+        <div style={{ background: "var(--bg-card)", padding: "30px", borderRadius: "16px", boxShadow: "var(--shadow)", border: "1px solid var(--border)", marginTop: "30px", maxWidth: "600px" }}>
+          <h4 style={{ marginBottom: "15px", color: "var(--text)" }}>➕ Top Up Personal Wallet</h4>
+          {message.text && <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`}>{message.text}</div>}
+          <form onSubmit={handleTopUp} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+            <input
+              type="number"
+              placeholder="e.g. 1000"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              style={{ padding: "15px", borderRadius: "8px", border: "1px solid var(--border-input)", fontSize: "18px", background: "var(--bg-input)", color: "var(--text)" }}
+              required
+            />
+            <button type="submit" className="btn btn-success" disabled={loading} style={{ padding: "15px", fontWeight: "bold", fontSize: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+              <FaPlusCircle /> {loading ? "Processing..." : "Top Up via M-Pesa"}
+            </button>
+          </form>
         </div>
 
         {/* History Table */}

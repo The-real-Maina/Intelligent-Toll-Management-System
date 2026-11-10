@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import API from "../services/api";
 import { FaWallet, FaTrash, FaUserPlus, FaCar, FaMoneyBillWave } from "react-icons/fa";
@@ -9,11 +9,19 @@ export default function CompanyDashboard() {
   const [loadError, setLoadError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [topupAmount, setTopupAmount] = useState("");
+  const [topupPhone, setTopupPhone] = useState("");
+  const [pendingTopup, setPendingTopup] = useState(null);
+  const [simulating, setSimulating] = useState(false);
   const [newVehicle, setNewVehicle] = useState({ plate_number: "", vehicle_type: "Car", owner_phone: "" });
   const [newDriver, setNewDriver] = useState({ full_name: "", email: "", phone: "", password: "" });
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const refresh = () => setReloadKey((k) => k + 1);
+  const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  const showMessage = useCallback((type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage({ type: "", text: "" }), 5000);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,20 +48,71 @@ export default function CompanyDashboard() {
     };
   }, [reloadKey]);
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: "", text: "" }), 4000);
-  };
+  useEffect(() => {
+    if (!pendingTopup) return;
+
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries += 1;
+      try {
+        const res = await API.get(`/companies/topup/${pendingTopup.id}`);
+
+        if (res.data.status === "completed") {
+          clearInterval(timer);
+          showMessage("success", `✅ KES ${pendingTopup.amount} added to your company wallet!`);
+          setPendingTopup(null);
+          setTopupAmount("");
+          refresh();
+        } else if (res.data.status === "failed") {
+          clearInterval(timer);
+          showMessage("error", "❌ Top-up failed: " + (res.data.reason || "payment was cancelled or declined"));
+          setPendingTopup(null);
+        } else if (tries >= 20) {
+          clearInterval(timer);
+          showMessage("error", "⏱️ No confirmation received yet. If money left your phone, refresh in a minute.");
+          setPendingTopup(null);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, [pendingTopup, refresh, showMessage]);
 
   const handleTopup = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/companies/topup", { amount: Number(topupAmount) });
-      showMessage("success", `✅ Topped up KES ${topupAmount}!`);
+      const res = await API.post("/companies/topup", {
+        amount: Number(topupAmount),
+        phoneNumber: topupPhone,
+      });
+      setPendingTopup({ id: res.data.checkoutRequestId, amount: topupAmount });
+      showMessage("success", "📲 " + res.data.message);
+    } catch (err) {
+      showMessage("error", "❌ " + (err.response?.data?.message || "Error starting top-up"));
+    }
+  };
+
+  const handleSimulateTopup = async () => {
+    const value = Number(topupAmount);
+    if (!Number.isFinite(value) || value < 1) {
+      showMessage("error", "❌ Please enter a valid amount first.");
+      return;
+    }
+
+    setSimulating(true);
+    try {
+      // Fake a small delay so it feels real
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await API.post("/companies/simulate-topup", { amount: value });
+      showMessage("success", "🧪 " + res.data.message);
       setTopupAmount("");
       refresh();
     } catch (err) {
-      showMessage("error", "❌ " + (err.response?.data?.message || "Error topping up"));
+      showMessage("error", "❌ " + (err.response?.data?.message || "Error simulating top-up"));
+    } finally {
+      setSimulating(false);
     }
   };
 
@@ -104,7 +163,6 @@ export default function CompanyDashboard() {
       <Sidebar />
       <div className="content" style={{ padding: "30px" }}>
 
-        {/* Header */}
         <div style={{ marginBottom: "25px", borderBottom: "2px solid #198754", paddingBottom: "15px" }}>
           <h2 style={{ margin: 0, color: "var(--text-heading)" }}>🏢 {company.name}</h2>
           <p style={{ margin: "5px 0 0", color: "var(--text-muted)", fontSize: "14px" }}>
@@ -112,14 +170,12 @@ export default function CompanyDashboard() {
           </p>
         </div>
 
-        {/* Message */}
         {message.text && (
           <div className={`alert ${message.type === "success" ? "alert-success" : "alert-danger"}`} style={{ marginBottom: "20px" }}>
             {message.text}
           </div>
         )}
 
-        {/* 4 Stats Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "25px" }}>
           <StatCard icon={<FaWallet />} label="Company Wallet" value={`KES ${parseFloat(company.wallet_balance).toLocaleString()}`} color="#198754" />
           <StatCard icon={<FaCar />} label="Fleet Vehicles" value={vehicles.length} color="#0d6efd" />
@@ -127,7 +183,6 @@ export default function CompanyDashboard() {
           <StatCard icon={<FaUserPlus />} label="Total Payments" value={payments.length} color="#6f42c1" />
         </div>
 
-        {/* Two Column: Top Up + Add Vehicle */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "25px" }}>
 
           {/* Wallet Top-Up */}
@@ -136,14 +191,42 @@ export default function CompanyDashboard() {
             <p style={{ margin: "0 0 20px", fontSize: "14px", opacity: 0.9 }}>
               Add funds via M-Pesa. All fleet vehicles will use this wallet.
             </p>
-            <form onSubmit={handleTopup} style={{ display: "flex", gap: "10px" }}>
-              <input type="number" placeholder="Amount (KES)" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} style={{ flex: 1, padding: "14px", borderRadius: "8px", border: "none", fontSize: "16px" }} required />
-              <button type="submit" style={{ padding: "14px 25px", background: "#ffd700", color: "#000", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "16px" }}>
-                Top Up
-              </button>
+            <form onSubmit={handleTopup} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <input type="tel" placeholder="M-Pesa phone (e.g. 0712345678)" value={topupPhone} onChange={(e) => setTopupPhone(e.target.value)} disabled={!!pendingTopup || simulating} style={{ padding: "14px", borderRadius: "8px", border: "none", fontSize: "16px" }} required />
+              <div style={{ display: "flex", gap: "10px" }}>
+                <input type="number" min="1" max="150000" placeholder="Amount (KES)" value={topupAmount} onChange={(e) => setTopupAmount(e.target.value)} disabled={!!pendingTopup || simulating} style={{ flex: 1, padding: "14px", borderRadius: "8px", border: "none", fontSize: "16px" }} required />
+                <button type="submit" disabled={!!pendingTopup || simulating} style={{ padding: "14px 25px", background: "#ffd700", color: "#000", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: pendingTopup || simulating ? "not-allowed" : "pointer", fontSize: "16px", opacity: pendingTopup || simulating ? 0.6 : 1 }}>
+                  {pendingTopup ? "Waiting..." : "Top Up"}
+                </button>
+              </div>
             </form>
+
+            {/* SIMULATE BUTTON */}
+            <button
+              type="button"
+              onClick={handleSimulateTopup}
+              disabled={simulating || !!pendingTopup}
+              style={{
+                width: "100%",
+                marginTop: "12px",
+                padding: "14px",
+                background: simulating || pendingTopup ? "#a5c9f0" : "rgba(255, 255, 255, 0.2)",
+                border: "2px solid white",
+                color: "white",
+                borderRadius: "8px",
+                fontWeight: "bold",
+                cursor: simulating || pendingTopup ? "not-allowed" : "pointer",
+                fontSize: "15px",
+                opacity: simulating || pendingTopup ? 0.6 : 1,
+              }}
+            >
+              {simulating ? "⏳ Simulating..." : "🧪 Simulate Top Up (For Testing)"}
+            </button>
+
             <p style={{ margin: "15px 0 0", fontSize: "12px", opacity: 0.8 }}>
-              Current Balance: KES {parseFloat(company.wallet_balance).toLocaleString()}
+              {pendingTopup
+                ? "📲 Enter your M-Pesa PIN on your phone. Waiting for confirmation..."
+                : `Current Balance: KES ${parseFloat(company.wallet_balance).toLocaleString()}`}
             </p>
           </div>
 

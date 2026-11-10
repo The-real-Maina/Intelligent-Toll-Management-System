@@ -85,6 +85,48 @@ async function initiateSTKPush({ phoneNumber, amount, accountReference, transact
   }
 }
 
+// Ask Safaricom directly what happened to an STK Push.
+// Returns { state: 'success' | 'failed' | 'pending' | 'unknown', resultCode, resultDesc }
+// Used to confirm a payment before crediting money, so a forged callback can't fake it.
+async function queryStkPush(checkoutRequestId) {
+  const accessToken = await getAccessToken();
+  const timestamp = getTimestamp();
+  const password = getPassword(timestamp);
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/mpesa/stkpushquery/v1/query`,
+      {
+        BusinessShortCode: process.env.MPESA_SHORTCODE,
+        Password: password,
+        Timestamp: timestamp,
+        CheckoutRequestID: checkoutRequestId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const code = String(response.data.ResultCode);
+    return {
+      state: code === '0' ? 'success' : 'failed',
+      resultCode: code,
+      resultDesc: response.data.ResultDesc,
+    };
+  } catch (error) {
+    const data = error.response?.data;
+    // Safaricom answers with this error while the customer is still deciding
+    if (data?.errorCode === '500.001.1001') {
+      return { state: 'pending' };
+    }
+    console.error('STK Query error:', data || error.message);
+    return { state: 'unknown' };
+  }
+}
+
 function formatPhoneNumber(phone) {
   let formatted = phone.replace(/\s+/g, '').replace(/^\+/, '');
   if (formatted.startsWith('0')) {
@@ -99,5 +141,6 @@ function formatPhoneNumber(phone) {
 module.exports = {
   getAccessToken,
   initiateSTKPush,
+  queryStkPush,
   formatPhoneNumber,
 };
