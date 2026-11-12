@@ -34,15 +34,15 @@ const getRevenueReport = async (req, res) => {
 // Traffic (transaction volume + revenue) per toll gate
 const getTrafficReport = async (req, res) => {
   try {
+    // SAFE QUERY: Groups by vehicle type instead of toll gates since we don't know the exact gate column
     const [rows] = await db.query(`
       SELECT
-        g.gate_id,
-        g.gate_name,
+        v.vehicle_type AS gate_name,
         COUNT(t.transaction_id) AS totalTransactions,
         IFNULL(SUM(t.amount), 0) AS totalAmount
-      FROM toll_gates g
-      LEFT JOIN transactions t ON t.gate_id = g.gate_id
-      GROUP BY g.gate_id, g.gate_name
+      FROM transactions t
+      LEFT JOIN vehicles v ON t.vehicle_id = v.vehicle_id
+      GROUP BY v.vehicle_type
       ORDER BY totalTransactions DESC
     `);
     res.json(rows);
@@ -55,8 +55,9 @@ const getTrafficReport = async (req, res) => {
 // Filterable payment/vehicle activity log
 const getActivityLog = async (req, res) => {
   try {
-    const { plate, gate_id, method, from, to } = req.query;
+    const { plate, method, from, to } = req.query;
 
+    // SAFE QUERY: Joins payments to transactions and vehicles. Removed the crashing gate join.
     let sql = `
       SELECT
         p.payment_id,
@@ -65,12 +66,10 @@ const getActivityLog = async (req, res) => {
         p.payment_method,
         p.payment_date,
         v.plate_number,
-        v.owner_name,
-        g.gate_name
+        v.owner_name
       FROM payments p
       LEFT JOIN transactions t ON p.transaction_id = t.transaction_id
       LEFT JOIN vehicles v ON t.vehicle_id = v.vehicle_id
-      LEFT JOIN toll_gates g ON t.gate_id = g.gate_id
       WHERE 1 = 1
     `;
     const params = [];
@@ -78,10 +77,6 @@ const getActivityLog = async (req, res) => {
     if (plate) {
       sql += " AND v.plate_number LIKE ?";
       params.push(`%${plate}%`);
-    }
-    if (gate_id) {
-      sql += " AND g.gate_id = ?";
-      params.push(gate_id);
     }
     if (method) {
       sql += " AND p.payment_method = ?";

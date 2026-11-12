@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaUser, FaLock, FaArrowLeft } from "react-icons/fa";
+import { FaUser, FaLock, FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import tollBg from "../assets/toll-bg.jpg";
@@ -17,6 +17,9 @@ function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // NEW: State for showing/hiding the password
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -78,7 +81,24 @@ function Login() {
               <label className="form-label">Password</label>
               <div className="input-group">
                 <span className="input-group-text"><FaLock /></span>
-                <input type="password" name="password" className="form-control" placeholder="Enter password" value={formData.password} onChange={handleChange} required />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  name="password" 
+                  className="form-control" 
+                  placeholder="Enter password" 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  required 
+                />
+                {/* NEW: Eye icon button inside the input group */}
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex="-1"
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
               </div>
             </div>
 

@@ -144,6 +144,10 @@ const login = async (req, res) => {
       if (status === "Rejected") {
         return res.status(403).json({ message: "Your company registration was rejected by the ITMS Admin. Please contact support." });
       }
+
+      // NEW: Force Company Admin to use OTP!
+      const otp = await issueOtp(user);
+      return res.json({ message: "Enter OTP", otp_required: true, email: user.email, ...demoOtp(otp) });
     }
 
     if (!user.is_verified) {
@@ -164,7 +168,12 @@ const verifyLoginOtp = async (req, res) => {
     const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
     if (rows.length === 0) return res.status(401).json({ message: "Invalid request" });
     const user = rows[0];
-    if (user.role !== "Toll Attendant") return res.status(400).json({ message: "Only for Toll Attendants" });
+    
+    // UPDATED: Allow both Toll Attendants and Company Admins to verify OTP
+    if (user.role !== "Toll Attendant" && user.role !== "Company Admin") {
+        return res.status(400).json({ message: "Invalid OTP request for this role." });
+    }
+    
     const problem = checkOtp(user, otp);
     if (problem) return res.status(400).json({ message: problem });
     await db.query("UPDATE users SET otp_code = NULL, otp_expires_at = NULL WHERE user_id = ?", [user.user_id]);

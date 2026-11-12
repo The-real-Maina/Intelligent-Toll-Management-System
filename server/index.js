@@ -22,6 +22,9 @@ const disputeRoutes = require("./routes/disputes");
 const companyRoutes = require("./routes/companies");
 const companyDriverRoutes = require("./routes/companyDrivers");
 
+// NEW: AI ROUTE IMPORT
+const aiRoutes = require("./routes/aiRoutes"); 
+
 const app = express();
 
 app.use(cors());
@@ -47,6 +50,9 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/disputes", disputeRoutes);
 app.use("/api/companies", companyRoutes);
+
+// NEW: AI ROUTE MOUNT
+app.use("/api/ai", aiRoutes);
 
 app.get("/", (req, res) => {
   res.send("🚗 Intelligent Toll Management API is running...");

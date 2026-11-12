@@ -10,6 +10,10 @@ export default function AdminDisputes() {
   const [adminNotes, setAdminNotes] = useState("");
   const [processing, setProcessing] = useState(false);
 
+  // AI Summary States
+  const [aiSummary, setAiSummary] = useState("");
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
   const refresh = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
@@ -31,6 +35,27 @@ export default function AdminDisputes() {
     };
   }, [reloadKey]);
 
+  const generateAiSummary = async () => {
+    setLoadingSummary(true);
+    setAiSummary("");
+    try {
+      const res = await API.post("/ai/summarize-dispute", {
+        name: selected.full_name,
+        complaint: selected.reason
+      });
+      if (res.data.success) {
+        setAiSummary(res.data.summary);
+      } else {
+        setAiSummary("Could not generate summary.");
+      }
+    } catch (error) {
+      console.error("AI Error:", error);
+      setAiSummary("Failed to connect to AI server.");
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   const handleAction = async (id, action) => {
     setProcessing(true);
     try {
@@ -38,6 +63,7 @@ export default function AdminDisputes() {
       alert("✅ " + (res.data.message || "Success!"));
       setSelected(null);
       setAdminNotes("");
+      setAiSummary("");
       refresh();
     } catch (err) {
       console.error("Resolve error:", err);
@@ -88,7 +114,10 @@ export default function AdminDisputes() {
               {disputes.map((d) => (
                 <div
                   key={d.dispute_id}
-                  onClick={() => setSelected(d)}
+                  onClick={() => {
+                    setSelected(d);
+                    setAiSummary(""); 
+                  }}
                   style={{
                     padding: "15px",
                     borderBottom: "1px solid var(--border)",
@@ -125,9 +154,28 @@ export default function AdminDisputes() {
                     <label style={{ fontSize: "12px", fontWeight: "bold", color: "var(--text-muted)" }}>Amount</label>
                     <p style={{ margin: "3px 0", color: "var(--text)", fontWeight: "bold" }}>KES {selected.amount}</p>
                   </div>
-                  <div style={{ marginBottom: "15px" }}>
-                    <label style={{ fontSize: "12px", fontWeight: "bold", color: "var(--text-muted)" }}>Reason</label>
-                    <p style={{ margin: "3px 0", color: "var(--text)" }}>{selected.reason}</p>
+                  
+                  {/* REASON SECTION WITH AI BUTTON */}
+                  <div style={{ marginBottom: "15px", padding: "15px", backgroundColor: "var(--bg-subtle)", borderRadius: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                      <label style={{ fontSize: "12px", fontWeight: "bold", color: "var(--text-muted)", margin: 0 }}>Driver's Reason</label>
+                      <button 
+                        onClick={generateAiSummary} 
+                        disabled={loadingSummary}
+                        style={{ backgroundColor: "#6f42c1", color: "white", border: "none", padding: "5px 10px", borderRadius: "5px", cursor: loadingSummary ? "not-allowed" : "pointer", fontSize: "12px", fontWeight: "bold" }}
+                      >
+                        {loadingSummary ? "Summarizing..." : "🤖 AI Summary"}
+                      </button>
+                    </div>
+                    <p style={{ margin: 0, color: "var(--text)", fontStyle: "italic" }}>"{selected.reason}"</p>
+                    
+                    {/* AI SUMMARY DISPLAY - FIXED COLORS FOR DARK MODE */}
+                    {aiSummary && (
+                      <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#2d1b4e", borderLeft: "4px solid #6f42c1", borderRadius: "4px" }}>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#d8b4fe", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5px" }}>AI Summary</p>
+                        <p style={{ margin: "6px 0 0", fontSize: "14px", color: "white" }}>{aiSummary.replace(/^Summary:\s*/i, "")}</p>
+                      </div>
+                    )}
                   </div>
 
                   {selected.status === "Pending" && (

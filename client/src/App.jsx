@@ -26,6 +26,7 @@ import EmployeeManagement from "./pages/EmployeeManagement";
 import AuditLogs from "./pages/AuditLogs";
 import DriverWallet from "./pages/DriverWallet";
 import AdminDisputes from "./pages/AdminDisputes";
+import DriverDisputes from "./pages/DriverDisputes"; // NEW
 import Companies from "./pages/Companies";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyVehicles from "./pages/CompanyVehicles";
@@ -33,6 +34,8 @@ import CompanyDrivers from "./pages/CompanyDrivers";
 import CompanyPayments from "./pages/CompanyPayments";
 import CompanyReports from "./pages/CompanyReports";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+import AIChatWidget from "./components/AIChatWidget";
 
 function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
@@ -67,6 +70,9 @@ function App() {
 
         <Route path="/vehicles" element={<ProtectedRoute allowedRoles={["Driver"]}><Vehicles /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute allowedRoles={["Driver"]}><DriverWallet /></ProtectedRoute>} />
+        
+        {/* NEW: Driver Disputes Route */}
+        <Route path="/my-disputes" element={<ProtectedRoute allowedRoles={["Driver"]}><DriverDisputes /></ProtectedRoute>} />
 
         <Route path="/toll-gates" element={<ProtectedRoute allowedRoles={["Admin"]}><TollGates /></ProtectedRoute>} />
         <Route path="/tollgates" element={<ProtectedRoute allowedRoles={["Admin"]}><TollGates /></ProtectedRoute>} />
@@ -90,6 +96,8 @@ function App() {
         <Route path="/attendant-shift-log" element={<ProtectedRoute allowedRoles={["Toll Attendant"]}><AttendantShiftLog /></ProtectedRoute>} />
         <Route path="/my-shift" element={<ProtectedRoute allowedRoles={["Toll Attendant"]}><AttendantShift /></ProtectedRoute>} />
       </Routes>
+      
+      <AIChatWidget />
     </div>
   );
 }

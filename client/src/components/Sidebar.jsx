@@ -4,7 +4,7 @@ import {
   FaTachometerAlt, FaCar, FaRoad, FaMoneyBillWave, FaUsers, 
   FaChartBar, FaCog, FaSignOutAlt, FaCheckCircle, FaClipboardList, 
   FaExclamationTriangle, FaMoneyCheckAlt, FaUser, FaBars, FaHistory,
-  FaClock, FaTimes, FaWallet, FaBuilding
+  FaClock, FaTimes, FaWallet, FaBuilding, FaEnvelopeOpenText
 } from "react-icons/fa";
 
 const MOBILE_QUERY = "(max-width: 768px)";
@@ -140,6 +140,11 @@ function Sidebar() {
         {isAdmin && <SidebarLink to="/tollgates" icon={<FaRoad />} label="Toll Gates" location={location} collapsed={collapsed} />}
         {isDriver && <SidebarLink to="/pay" icon={<FaMoneyBillWave />} label="Pay Toll" location={location} collapsed={collapsed} />}
         {(isAdmin || isDriver) && <SidebarLink to="/payments" icon={<FaMoneyBillWave />} label="Payments" location={location} collapsed={collapsed} />}
+
+        {/* NEW: Driver Disputes Link */}
+        {isDriver && (
+          <SidebarLink to="/my-disputes" icon={<FaEnvelopeOpenText />} label="My Disputes" location={location} collapsed={collapsed} />
+        )}
 
         {isAdmin && <SidebarLink to="/users" icon={<FaUsers />} label="Users" location={location} collapsed={collapsed} />}
         {isAdmin && <SidebarLink to="/companies" icon={<FaBuilding />} label="Companies" location={location} collapsed={collapsed} />}

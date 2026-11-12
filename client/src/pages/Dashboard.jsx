@@ -13,7 +13,8 @@ import {
   FaHistory,
   FaMobileAlt,
   FaBolt,
-  FaReceipt
+  FaReceipt,
+  FaRobot
 } from "react-icons/fa";
 
 /* ---------- Shared theme-aware styles ---------- */
@@ -61,6 +62,14 @@ function Dashboard() {
   const [recentVehicles, setRecentVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // AI Report State
+  const [aiReport, setAiReport] = useState("");
+  const [loadingReport, setLoadingReport] = useState(false);
+
+  // AI Driver Insight State
+  const [driverTip, setDriverTip] = useState("");
+  const [loadingTip, setLoadingTip] = useState(false);
+
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
@@ -107,6 +116,49 @@ function Dashboard() {
     loadDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const generateReport = async () => {
+    setLoadingReport(true);
+    setAiReport("");
+    try {
+      const res = await API.post("/ai/generate-report");
+      if (res.data.success) {
+        setAiReport(res.data.report);
+      } else {
+        setAiReport("The AI returned an error: " + (res.data.report || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Failed to generate report:", error);
+      setAiReport("Failed to connect to the AI. Make sure both Node.js (Port 5000) and Python (Port 8001) servers are running.");
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  const loadDriverInsight = async () => {
+    setLoadingTip(true);
+    setDriverTip(""); // Clear previous tip
+    
+    try {
+      const res = await API.post("/ai/driver-insight", {
+        user_id: user.user_id,
+        name: user.full_name,
+        payments: recentPayments
+      });
+      
+      console.log("Response from Backend:", res.data); // Check browser console for this!
+
+      // Force the state to update with whatever text is available
+      const textToShow = res.data?.insight || res.data?.reply || "No insight received from server.";
+      setDriverTip(textToShow);
+      
+    } catch (error) {
+      console.error("Failed to load insight:", error);
+      setDriverTip("Could not connect to the server. Please check your terminals.");
+    } finally {
+      setLoadingTip(false);
+    }
+  };
 
   const renderReference = (ref) => {
     if (!ref || ref === "null") {
@@ -215,6 +267,36 @@ function Dashboard() {
                   </div>
                 </div>
 
+                {/* AI Business Analyst Card */}
+                <div style={{ ...panelStyle, marginBottom: "30px", border: "1px solid #198754" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                    <h5 style={{ ...panelTitleStyle, margin: 0 }}>
+                      <FaRobot color="#198754" /> AI Business Analyst
+                    </h5>
+                    <button 
+                      onClick={generateReport} 
+                      disabled={loadingReport}
+                      style={{ 
+                        backgroundColor: "#198754", color: "white", border: "none", 
+                        padding: "10px 20px", borderRadius: "8px", cursor: loadingReport ? "not-allowed" : "pointer", 
+                        fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" 
+                      }}
+                    >
+                      <FaBolt /> {loadingReport ? "Analyzing Data..." : "Generate Summary"}
+                    </button>
+                  </div>
+                  
+                  {aiReport ? (
+                    <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--text)", fontStyle: "italic", margin: 0, padding: "15px", backgroundColor: "var(--bg-subtle)", borderRadius: "8px" }}>
+                      "{aiReport}"
+                    </p>
+                  ) : (
+                    <p style={{ ...mutedTextStyle, margin: 0 }}>
+                      Click the button above to let the AI analyze today's toll performance and write a summary for you.
+                    </p>
+                  )}
+                </div>
+
                 {/* Two Column */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
 
@@ -316,6 +398,36 @@ function Dashboard() {
                     <p style={{ margin: 0, ...mutedTextStyle, fontSize: "13px" }}>Active Toll Gates</p>
                   </div>
 
+                </div>
+
+                {/* AI Driver Insight Card */}
+                <div style={{ ...panelStyle, marginBottom: "24px", border: "1px solid #0d6efd" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
+                    <h5 style={{ ...panelTitleStyle, margin: 0 }}>
+                      <FaRobot color="#0d6efd" /> AI Spending Insight
+                    </h5>
+                    <button 
+                      onClick={loadDriverInsight} 
+                      disabled={loadingTip}
+                      style={{ 
+                        backgroundColor: "#0d6efd", color: "white", border: "none", 
+                        padding: "8px 16px", borderRadius: "8px", cursor: loadingTip ? "not-allowed" : "pointer", 
+                        fontWeight: "bold", fontSize: "13px"
+                      }}
+                    >
+                      {loadingTip ? "Thinking..." : "Get My Tip"}
+                    </button>
+                  </div>
+                  
+                  {driverTip ? (
+                    <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--text)", fontStyle: "italic", margin: 0, padding: "12px", backgroundColor: "var(--bg-subtle)", borderRadius: "8px" }}>
+                      "{driverTip}"
+                    </p>
+                  ) : (
+                    <p style={{ ...mutedTextStyle, margin: 0, fontSize: "14px" }}>
+                      Click "Get My Tip" and let the AI analyze your spending to give you a personalized recommendation.
+                    </p>
+                  )}
                 </div>
 
                 {/* QUICK ACTIONS FOR DRIVER */}
