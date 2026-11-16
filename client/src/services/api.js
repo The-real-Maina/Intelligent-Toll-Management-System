@@ -1,7 +1,8 @@
 import axios from "axios";
 
+// In production set VITE_API_URL to e.g. https://your-api.onrender.com/api
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
 });
 
 // Add token to every request
