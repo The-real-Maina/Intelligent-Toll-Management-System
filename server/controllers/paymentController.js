@@ -2,6 +2,13 @@ const db = require("../config/db");
 const { logAction } = require("./auditController");
 const { createNotification } = require("./notificationController");
 
+// A driver may use a vehicle if they own it, or if it belongs to their company.
+// A vehicle with no company never matches a driver with no company, so two empty
+// values can no longer count as a match.
+const canAccessVehicle = (vehicle, user) =>
+  vehicle.user_id === user.user_id ||
+  (vehicle.company_id != null && vehicle.company_id === user.company_id);
+
 const getPayments = async (req, res) => {
   try {
     let rows;
@@ -14,7 +21,7 @@ const getPayments = async (req, res) => {
          LEFT JOIN toll_gates g ON t.booth_id = g.gate_id
          WHERE v.user_id = ? OR v.company_id = ?
          ORDER BY p.payment_date DESC`,
-        [req.user.user_id, req.user.company_id]
+        [req.user.user_id, req.user.company_id ?? null]
       );
     } else {
       [rows] = await db.query(`
@@ -47,7 +54,13 @@ const getPaymentById = async (req, res) => {
     );
     if (rows.length === 0) return res.status(404).json({ message: "Payment not found" });
     const payment = rows[0];
-    if (req.user?.role === "Driver" && payment.vehicle_owner_id !== req.user.user_id && payment.vehicle_company_id !== req.user.company_id) {
+    if (
+      req.user?.role === "Driver" &&
+      !canAccessVehicle(
+        { user_id: payment.vehicle_owner_id, company_id: payment.vehicle_company_id },
+        req.user
+      )
+    ) {
       return res.status(403).json({ message: "Access denied" });
     }
     delete payment.vehicle_owner_id;
@@ -70,7 +83,7 @@ const createPayment = async (req, res) => {
     const [vehicleRows] = await db.query("SELECT user_id, company_id, is_blacklisted FROM vehicles WHERE vehicle_id = ?", [vehicle_id]);
     if (vehicleRows.length === 0) return res.status(404).json({ message: "Vehicle not found" });
     const v = vehicleRows[0];
-    if (v.user_id !== req.user.user_id && v.company_id !== req.user.company_id) {
+    if (!canAccessVehicle(v, req.user)) {
       return res.status(403).json({ message: "You can only pay for your own or your company's vehicles" });
     }
     if (v.is_blacklisted) {
@@ -88,14 +101,15 @@ const createPayment = async (req, res) => {
     await conn.beginTransaction();
 
     // 🟢 WALLET DEDUCTION
+    // The vehicle decides which wallet pays: a company vehicle uses the company
+    // wallet, a personal vehicle (no company_id) uses the driver's own wallet.
     if (payment_method === "Wallet" && req.user?.role === "Driver") {
-      // Look up the vehicle to see if it's a company vehicle
       const [vehRows] = await conn.query("SELECT company_id FROM vehicles WHERE vehicle_id = ?", [vehicle_id]);
       const companyId = vehRows[0]?.company_id;
 
       if (companyId) {
         // 🏢 Deduct from COMPANY wallet
-        const [companyRows] = await conn.query("SELECT wallet_balance FROM companies WHERE company_id = ?", [companyId]);
+        const [companyRows] = await conn.query("SELECT wallet_balance FROM companies WHERE company_id = ? FOR UPDATE", [companyId]);
         const companyBalance = parseFloat(companyRows[0]?.wallet_balance || 0);
 
         if (companyBalance < amount) {
@@ -114,7 +128,7 @@ const createPayment = async (req, res) => {
         );
       } else {
         // 👤 Deduct from DRIVER personal wallet
-        const [userRows] = await conn.query("SELECT wallet_balance FROM users WHERE user_id = ?", [req.user.user_id]);
+        const [userRows] = await conn.query("SELECT wallet_balance FROM users WHERE user_id = ? FOR UPDATE", [req.user.user_id]);
         const currentBalance = parseFloat(userRows[0]?.wallet_balance || 0);
 
         if (currentBalance < amount) {

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   FaTachometerAlt, FaCar, FaRoad, FaMoneyBillWave, FaUsers, 
   FaChartBar, FaCog, FaSignOutAlt, FaCheckCircle, FaClipboardList, 
-  FaExclamationTriangle, FaMoneyCheckAlt, FaUser, FaBars, FaHistory,
+  FaExclamationTriangle, FaMoneyCheckAlt, FaBars, FaHistory,
   FaClock, FaTimes, FaWallet, FaBuilding, FaEnvelopeOpenText
 } from "react-icons/fa";
 
@@ -102,7 +102,7 @@ function Sidebar() {
         </div>
       )}
 
-      <nav style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+      <nav style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
         {isAttendant && (
           <>
             <SidebarLink to="/attendant-home" icon={<FaTachometerAlt />} label="Dashboard" location={location} collapsed={collapsed} />
@@ -112,7 +112,7 @@ function Sidebar() {
             <SidebarLink to="/attendant-shift-log" icon={<FaClipboardList />} label="Shift Log" location={location} collapsed={collapsed} />
             <SidebarLink to="/my-shift" icon={<FaClock />} label="My Shift" location={location} collapsed={collapsed} />
             {!collapsed && <hr style={{ border: "1px solid rgba(255,255,255,0.2)", margin: "10px 0" }} />}
-            <SidebarLink to="/profile" icon={<FaUser />} label="My Profile" location={location} collapsed={collapsed} />
+            <SidebarLink to="/settings" icon={<FaCog />} label="Settings" location={location} collapsed={collapsed} />
           </>
         )}
 
@@ -123,6 +123,8 @@ function Sidebar() {
             <SidebarLink to="/company-drivers" icon={<FaUsers />} label="Drivers" location={location} collapsed={collapsed} />
             <SidebarLink to="/company-payments" icon={<FaMoneyBillWave />} label="Payments" location={location} collapsed={collapsed} />
             <SidebarLink to="/company-reports" icon={<FaChartBar />} label="Reports" location={location} collapsed={collapsed} />
+            {!collapsed && <hr style={{ border: "1px solid rgba(255,255,255,0.2)", margin: "10px 0" }} />}
+            <SidebarLink to="/settings" icon={<FaCog />} label="Settings" location={location} collapsed={collapsed} />
           </>
         )}
 
@@ -141,7 +143,7 @@ function Sidebar() {
         {isDriver && <SidebarLink to="/pay" icon={<FaMoneyBillWave />} label="Pay Toll" location={location} collapsed={collapsed} />}
         {(isAdmin || isDriver) && <SidebarLink to="/payments" icon={<FaMoneyBillWave />} label="Payments" location={location} collapsed={collapsed} />}
 
-        {/* NEW: Driver Disputes Link */}
+        {/* Driver Disputes Link */}
         {isDriver && (
           <SidebarLink to="/my-disputes" icon={<FaEnvelopeOpenText />} label="My Disputes" location={location} collapsed={collapsed} />
         )}
@@ -152,8 +154,9 @@ function Sidebar() {
         {isAdmin && <SidebarLink to="/disputes" icon={<FaExclamationTriangle />} label="Disputes" location={location} collapsed={collapsed} />}
         {isAdmin && <SidebarLink to="/reports" icon={<FaChartBar />} label="Reports" location={location} collapsed={collapsed} />}
         {isAdmin && <SidebarLink to="/audit-logs" icon={<FaHistory />} label="Audit Logs" location={location} collapsed={collapsed} />}
-        {isAdmin && <SidebarLink to="/settings" icon={<FaCog />} label="Settings" location={location} collapsed={collapsed} />}
-        {isAdmin && <SidebarLink to="/profile" icon={<FaUser />} label="My Profile" location={location} collapsed={collapsed} />}
+        
+        {/* Universal Settings Link for Driver and Admin */}
+        {(isAdmin || isDriver) && <SidebarLink to="/settings" icon={<FaCog />} label="Settings" location={location} collapsed={collapsed} />}
 
         <button onClick={handleLogout} style={{ ...logoutButtonStyle, justifyContent: collapsed ? "center" : "flex-start" }}>
           <FaSignOutAlt /> {!collapsed && "Logout"}
@@ -174,10 +177,10 @@ function SidebarLink({ to, icon, label, location, collapsed }) {
   );
 }
 
-const sidebarStyle = { background: "#198754", color: "white", padding: "20px", height: "100vh", position: "fixed", left: 0, top: 0, overflowY: "auto", boxSizing: "border-box", transition: "width 0.3s ease" };
+const sidebarStyle = { background: "#198754", color: "white", padding: "20px", height: "100vh", position: "fixed", left: 0, top: 0, overflowY: "auto", boxSizing: "border-box", transition: "width 0.3s ease", display: "flex", flexDirection: "column" };
 const linkStyle = { color: "white", textDecoration: "none", display: "flex", alignItems: "center", gap: "15px", padding: "12px 15px", borderRadius: "8px", fontSize: "15px", transition: "0.2s", overflow: "hidden", whiteSpace: "nowrap" };
 const activeLinkStyle = { ...linkStyle, background: "rgba(255,255,255,0.2)", fontWeight: "bold" };
-const logoutButtonStyle = { ...linkStyle, background: "#dc3545", border: "none", cursor: "pointer", marginTop: "20px", width: "100%", fontWeight: "bold" };
+const logoutButtonStyle = { ...linkStyle, background: "#dc3545", border: "none", cursor: "pointer", marginTop: "auto", width: "100%", fontWeight: "bold", flexShrink: 0 };
 const openButtonStyle = { position: "fixed", top: "14px", left: "14px", zIndex: 998, width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "#198754", color: "white", fontSize: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.25)" };
 const backdropStyle = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999 };
 

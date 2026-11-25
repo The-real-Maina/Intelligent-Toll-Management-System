@@ -1,6 +1,13 @@
 const db = require("../config/db");
 const { logAction } = require("./auditController");
 
+// A driver may use a vehicle if they own it, or if it belongs to their company.
+// A vehicle with no company never matches a driver with no company, so two empty
+// values can no longer count as a match.
+const canAccessVehicle = (vehicle, user) =>
+  vehicle.user_id === user.user_id ||
+  (vehicle.company_id != null && vehicle.company_id === user.company_id);
+
 const getVehicles = async (req, res) => {
   try {
     let rows;
@@ -12,13 +19,13 @@ const getVehicles = async (req, res) => {
          LEFT JOIN companies c ON v.company_id = c.company_id
          WHERE v.user_id = ? OR v.company_id = ?
          ORDER BY v.created_at DESC`,
-        [req.user.user_id, req.user.company_id]
+        [req.user.user_id, req.user.company_id ?? null]
       );
     } else if (req.user.role === "Company Admin") {
       // Company Admin sees only their fleet
       [rows] = await db.query(
         "SELECT * FROM vehicles WHERE company_id = ?",
-        [req.user.company_id]
+        [req.user.company_id ?? null]
       );
     } else {
       [rows] = await db.query("SELECT * FROM vehicles ORDER BY created_at DESC");
@@ -36,7 +43,7 @@ const getVehicleById = async (req, res) => {
     const [rows] = await db.query("SELECT * FROM vehicles WHERE vehicle_id = ?", [id]);
     if (rows.length === 0) return res.status(404).json({ message: "Vehicle not found" });
     const vehicle = rows[0];
-    if (req.user.role === "Driver" && vehicle.user_id !== req.user.user_id && vehicle.company_id !== req.user.company_id) {
+    if (req.user.role === "Driver" && !canAccessVehicle(vehicle, req.user)) {
       return res.status(403).json({ message: "Access denied" });
     }
     res.json(vehicle);
@@ -45,6 +52,9 @@ const getVehicleById = async (req, res) => {
   }
 };
 
+// A vehicle added here has no company_id on purpose. That is what makes it a
+// personal vehicle, paid from the driver's own wallet. Company vehicles get their
+// company_id when the company admin adds them.
 const createVehicle = async (req, res) => {
   try {
     const { plate_number, owner_name, vehicle_type, owner_phone } = req.body;
@@ -68,7 +78,7 @@ const updateVehicle = async (req, res) => {
     if (req.user.role === "Driver") {
       const [existing] = await db.query("SELECT user_id, company_id FROM vehicles WHERE vehicle_id = ?", [id]);
       if (existing.length === 0) return res.status(404).json({ message: "Vehicle not found" });
-      if (existing[0].user_id !== req.user.user_id && existing[0].company_id !== req.user.company_id) {
+      if (!canAccessVehicle(existing[0], req.user)) {
         return res.status(403).json({ message: "Access denied" });
       }
     }
